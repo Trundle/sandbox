@@ -1,0 +1,540 @@
+(************** Content-type: application/mathematica **************
+                     CreatedBy='Mathematica 5.0'
+
+                    Mathematica-Compatible Notebook
+
+This notebook can be used with any Mathematica-compatible
+application, such as Mathematica, MathReader or Publicon. The data
+for the notebook starts with the line containing stars above.
+
+To get the notebook into a Mathematica-compatible application, do
+one of the following:
+
+* Save the data starting with the line of stars above into a file
+  with a name ending in .nb, then open the file inside the
+  application;
+
+* Copy the data starting with the line of stars above to the
+  clipboard, then use the Paste menu command inside the application.
+
+Data for notebooks contains only printable 7-bit ASCII and can be
+sent directly in email or through ftp in text mode.  Newlines can be
+CR, LF or CRLF (Unix, Macintosh or MS-DOS style).
+
+NOTE: If you modify the data for this notebook not in a Mathematica-
+compatible application, you must delete the line below containing
+the word CacheID, otherwise Mathematica-compatible applications may
+try to use invalid cache data.
+
+For more information on notebooks and Mathematica-compatible 
+applications, contact Wolfram Research:
+  web: http://www.wolfram.com
+  email: info@wolfram.com
+  phone: +1-217-398-0700 (U.S.)
+
+Notebook reader applications are available free of charge from 
+Wolfram Research.
+*******************************************************************)
+
+(*CacheID: 232*)
+
+
+(*NotebookFileLineBreakTest
+NotebookFileLineBreakTest*)
+(*NotebookOptionsPosition[     12601,        396]*)
+(*NotebookOutlinePosition[     13228,        418]*)
+(*  CellTagsIndexPosition[     13184,        414]*)
+(*WindowFrame->Normal*)
+
+
+
+Notebook[{
+Cell["Project Euler 1:", "Text"],
+
+Cell[BoxData[{
+    \(t = 0; \), "\n", 
+    \(For[i = 3, i < 1000, \(++i\), 
+      If[Mod[i, 3] \[Equal] 0 || Mod[i, 5] \[Equal] 0, 
+        t = t + i]]; \), "\n", 
+    \(t\)}], "Input"],
+
+Cell["Project Euler 2:", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+    \(t = 0; i = 0; x = 0; \), "\n", 
+    \(\(While[\((x = Fibonacci[i])\) \[LessEqual] 4\ 10\^6, \(i++\); 
+        If[EvenQ[x], t += x]];\)\), "\n", 
+    \(t\)}], "Input"],
+
+Cell[BoxData[
+    \(4613732\)], "Output"]
+}, Open  ]],
+
+Cell["Project Euler 3:", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+    \(Max @@ \(First /@ FactorInteger[600851475143]\)\)], "Input"],
+
+Cell[BoxData[
+    \(6857\)], "Output"]
+}, Open  ]],
+
+Cell["Project Euler 4:", "Text"],
+
+Cell[BoxData[{
+    \(\(Clear[PalindromQ];\)\), "\[IndentingNewLine]", 
+    \(\(PalindromQ[str_String] := 
+        str \[Equal] StringReverse[str];\)\)}], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+    \(\(t = 0;\)\), "\[IndentingNewLine]", 
+    \(\(For[i = 100, i < 1000, \(i++\), 
+        For[j = 100, j < 1000, \(j++\), 
+          If[PalindromQ[ToString[i\ j]], 
+            t = Max[t, i\ j]]]];\)\), "\[IndentingNewLine]", 
+    \(t\)}], "Input"],
+
+Cell[BoxData[
+    \(906609\)], "Output"]
+}, Open  ]],
+
+Cell["Project Euler 5:", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+    \(\(t = 1;\)\), "\n", 
+    \(\(For[j = 2, j \[LessEqual] 20, \(j++\), 
+        If[\(! PrimeQ[j]\), Continue[]]; 
+        For[i = 2, i \[LessEqual] 20, \(i++\), 
+          If[Mod[i, j] \[Equal] 0 && Length[FactorInteger[i]] \[Equal] 1, 
+            t *= j]]];\)\), "\[IndentingNewLine]", 
+    \(t\)}], "Input"],
+
+Cell[BoxData[
+    \(232792560\)], "Output"]
+}, Open  ]],
+
+Cell["Project Euler 6:", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+    \(\(Clear[i];\)\), "\[IndentingNewLine]", 
+    \(\(sq = \[Sum]\+\(i = 1\)\%100 i\^2;\)\), "\n", 
+    \(\(qs = \((\[Sum]\+\(i = 1\)\%100 i)\)\^2;\)\), "\n", 
+    \(qs - sq\)}], "Input"],
+
+Cell[BoxData[
+    \(25164150\)], "Output"]
+}, Open  ]],
+
+Cell["Project Euler 7:", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+    \(\(c = 2;\)\), "\[IndentingNewLine]", 
+    \(For[t = 1, t < 10001, t += 1, c += 1; 
+      For[Null, \(! PrimeQ[c]\), c += 1]]\), "\[IndentingNewLine]", 
+    \(c\)}], "Input"],
+
+Cell[BoxData[
+    \(104743\)], "Output"]
+}, Open  ]],
+
+Cell["Project Euler 9:", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+    \(For[a = 1, a \[LessEqual] 499, a += 1, 
+      For[b = a + 1, b \[LessEqual] 499, b += 1, c = 1000 - b - a; 
+        If[a\^2 + b\^2 \[Equal] c\^2, Print[a]; Print[b]; Print[c]; 
+          Print[a\ b\ c]]]]; \)], "Input"],
+
+Cell[BoxData[
+    \(200\)], "Print"],
+
+Cell[BoxData[
+    \(375\)], "Print"],
+
+Cell[BoxData[
+    \(425\)], "Print"],
+
+Cell[BoxData[
+    \(31875000\)], "Print"]
+}, Open  ]],
+
+Cell["Project Euler 10:", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+    \(t = 0; x = Prime[1];\), "\[IndentingNewLine]", 
+    \(\(For[i = 2, x < 2\ 10\^6, \(++i\), t += x; 
+        x = Prime[i]];\)\), "\[IndentingNewLine]", 
+    \(t\)}], "Input"],
+
+Cell[BoxData[
+    \(142913828922\)], "Output"]
+}, Open  ]],
+
+Cell["Project Euler 16:", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+    \(Plus @@ IntegerDigits[2\^1000]\)], "Input"],
+
+Cell[BoxData[
+    \(1366\)], "Output"]
+}, Open  ]],
+
+Cell["Project Euler 20:", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+    \(Plus @@ IntegerDigits[\(100!\)]\)], "Input"],
+
+Cell[BoxData[
+    \(648\)], "Output"]
+}, Open  ]],
+
+Cell["Project Euler 14:", "Text"],
+
+Cell[BoxData[{
+    \(\(Clear[Colatz, ColSeq];\)\), "\[IndentingNewLine]", 
+    \(\($RecursionLimit = 1024;\)\), "\[IndentingNewLine]", 
+    \(\(Colatz[n_Integer] := 3\ n + 1;\)\), "\n", 
+    \(Colatz[n_Integer] := 
+      n\/2 /; EvenQ[n]\[IndentingNewLine]\), "\[IndentingNewLine]", 
+    \(\(ColSeq[n_Integer] := \(ColSeq[n] = 
+          ColSeq[Colatz[n]] + 1\);\)\), "\[IndentingNewLine]", 
+    \(ColSeq[n_Integer] := 1 /; n \[Equal] 1\)}], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+    \(\(m = 10\^6;\)\), "\[IndentingNewLine]", 
+    \(\(t = ColSeq[10\^6];\)\), "\n", 
+    \(\(For[i = 10\^6 - 1, i \[GreaterEqual] 10, i -= 1, n = ColSeq[i]; 
+        If[n > t, m = i; t = n]];\)\), "\n", 
+    \(m\), "\[IndentingNewLine]", 
+    \(t\)}], "Input"],
+
+Cell[BoxData[
+    \(837799\)], "Output"],
+
+Cell[BoxData[
+    \(525\)], "Output"]
+}, Open  ]],
+
+Cell["Project Euler 48:", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+    \(\[Sum]\+\(i = 1\)\%1000 i\^i\)], "Input"],
+
+Cell[BoxData[
+    \(100036819914469517709537501122764679556779368062293465458376098810023491\
+074771619438142865909952784594586994264319129089472034297990640767964725986043\
+423846803832604080969103761537037623771364851006311573295146177424670558426686\
+575960181584366644283228455688031311454815153919097539848549664557651346585858\
+271233640116622195618817344953167410268890832176466302030669977040862534076609\
+159502279137936809836930637560281385664635877375155877521346022579657984658333\
+400734935862434233933298133457123788880928310334876026136017595081560917946402\
+687100524365210998086355214201424290343406856093657323107934219403186441391810\
+123815105650926739351576039284247250139159407346300152184381107376702171102630\
+750469573346789782186690664846982834660741296739580179779168360983472243224195\
+284535256468186824036956956619282555532355807806199752768998384886337478678933\
+158156525205917261433942460098614325923316758337107036262555453185205416611714\
+885822950858158961433759446327755438051838092130121883632710223140733220110974\
+010258021646929833176692061964608379073280762736061442808517156500628972850868\
+896422679964719258292405858953075067457838536556187855958968575622569234891474\
+692281091391561983475411764835803581412867029415856566994208773628639094224154\
+722601500447133063011307204270428890504214262819377191859457430220214720118848\
+634591319083375230747696601054742392887106311878302603638131903905200825207205\
+793366671291894623331279369709407422418787204597097644430924278218773832025749\
+008082433007499169869823956112581112760786390035522173784669056770734407449414\
+526666210383981284021630344847691395707235573271662709837224522304679291974725\
+911315742582406485833141540094327821304295463505357404520998451222126424190355\
+017841682455141254863759000777908253928824775165356689988274959440589510258798\
+553952770949351004954644542726561747839910718823868177121590423411939224748975\
+107908594805594509880561796372292846955426378221762516042800822884555254034449\
+486019526711518709222776619575390721112664615014061474423397476527347561996431\
+185285861416781966834012473048771016200679352998575882065367727437956331349545\
+452663271872348233949482575982107640169431604345651211793793545646352146302119\
+772669498355892913235757618859497751663073421286386945616420552553676731129813\
+718251149464946366307375921921305682356166777609373942574288393071260996216346\
+408803882656913203216069263720618308594298797368458427649178484311547207790040\
+169259569411927355351102599126544603936628892174358133320008371710524117150460\
+688354341886202404755217705526342446950129890590193815824593863369410502481516\
+667981368915666834119771347509438990488712679446890189385047505001120522574245\
+555562575056021323038791033798395033324502065323898911550701388295627776388079\
+568721085719649389314265671310596627542214460598805893960060360422692140140209\
+651929425048867029798339635327946045314237554226788198919748178978067895509376\
+319365860369089847482697690654447397801745572036792998179602304178585262679727\
+1283465789498383642350667978127819110846700\)], "Output"]
+}, Open  ]],
+
+Cell["Project Euler 187:", "Text"],
+
+Cell[BoxData[
+    \(Clear[Ch]\)], "Input"],
+
+Cell[BoxData[{
+    \(\(Ch2[i_Integer] := 
+        Module[{x}, 
+          If[PrimeQ[i] || Mod[i, 20] \[Equal] 0 || Mod[i, 27] \[Equal] 0, 
+            Return[False]]; 
+          x = FactorInteger[i, FactorComplete \[Rule] False]; 
+          If[Length[x] > 2, Return[False]]; 
+          Return[Plus @@ \(\((#1\[LeftDoubleBracket]2\[RightDoubleBracket] &)\
+\) /@ x\) \[Equal] 2]];\)\), "\[IndentingNewLine]", 
+    \(\(Ch = 
+        Compile[{{i, _Integer}}, 
+          Module[{x}, Print[i]; 
+            If[PrimeQ[i] || Mod[i, 20] \[Equal] 0 || Mod[i, 27] \[Equal] 0, 
+              Return[0]]; x = FactorInteger[i, FactorComplete \[Rule] False]; 
+            If[Length[x] > 2, Return[0]]; 
+            If[Plus @@ \(\((#1\[LeftDoubleBracket]2\[RightDoubleBracket] &)\) \
+/@ x\) \[Equal] 2, Return[1], Return[0]]]];\)\)}], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+    \(Ch[100]\)], "Input"],
+
+Cell[BoxData[
+    \(100\)], "Print"],
+
+Cell[BoxData[
+    RowBox[{\(CompiledFunction::"cfse"\), \(\(:\)\(\ \)\), "\<\"Compiled \
+expression \\!\\(False\\) should be a \\!\\(\\\"machine-size integer\\\"\\). \
+\\!\\(\\*ButtonBox[\\\"More\[Ellipsis]\\\", ButtonStyle->\\\"RefGuideLinkText\
+\\\", ButtonFrame->None, \
+ButtonData:>\\\"CompiledFunction::cfse\\\"]\\)\"\>"}]], "Message"],
+
+Cell[BoxData[
+    RowBox[{\(CompiledFunction::"cfex"\), \(\(:\)\(\ \)\), "\<\"External \
+evaluation error at instruction \\!\\(3\\); proceeding with uncompiled \
+evaluation. \\!\\(\\*ButtonBox[\\\"More\[Ellipsis]\\\", \
+ButtonStyle->\\\"RefGuideLinkText\\\", ButtonFrame->None, \
+ButtonData:>\\\"CompiledFunction::cfex\\\"]\\)\"\>"}]], "Message"],
+
+Cell[BoxData[
+    \(100\)], "Print"],
+
+Cell[BoxData[
+    \(0\)], "Output"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+    \(\(t = 0;\)\), "\n", 
+    \(\(tu = TimeUsed[];\)\), "\[IndentingNewLine]", 
+    \(For[i = 2, i \[NotEqual] 10^8, i += 1, 
+      If[Mod[i, 10^5] \[Equal] 0, 
+        Print[ToString[TimeUsed[] - tu] <> "\<: \>" <> ToString[i]]]; 
+      If[PrimeQ[i] || Mod[i, 8] \[Equal] 0 || Mod[i, 20] \[Equal] 0 || 
+          Mod[i, 27] \[Equal] 0, Continue[]]; 
+      x = FactorInteger[i, FactorComplete \[Rule] False]; 
+      If[Length[x] > 2, Continue[]]; 
+      If[Plus @@ \(\((#1\[LeftDoubleBracket]2\[RightDoubleBracket] &)\) /@ 
+              x\) \[Equal] 2, t += 1]]\), "\n", 
+    \(t\)}], "Input"],
+
+Cell[BoxData[
+    \("5.30433: 100000"\)], "Print"],
+
+Cell[BoxData[
+    \("10.6327: 200000"\)], "Print"],
+
+Cell[BoxData[
+    \("15.989: 300000"\)], "Print"],
+
+Cell[BoxData[
+    \("21.3493: 400000"\)], "Print"],
+
+Cell[BoxData[
+    \("26.7217: 500000"\)], "Print"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+    \(\(t = 0;\)\), "\n", 
+    \(\(tu = TimeUsed[];\)\), "\[IndentingNewLine]", 
+    \(For[i = 3, i < 30, i += 2, 
+      If[Mod[i, 10^5] \[Equal] 0, 
+        Print[ToString[TimeUsed[] - tu] <> "\<: \>" <> ToString[i]]]; 
+      t += Ch2[i]]\), "\n", 
+    \(t + 1\)}], "Input"],
+
+Cell[BoxData[
+    \(1 + 10\ False + 4\ True\)], "Output"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+    \(\[IndentingNewLine]\)], "Input"],
+
+Cell[BoxData[
+    \(223.109943`\)], "Output"]
+}, Open  ]]
+},
+FrontEndVersion->"5.0 for X",
+ScreenRectangle->{{0, 1024}, {0, 768}},
+WindowSize->{520, 600},
+WindowMargins->{{0, Automatic}, {Automatic, 0}}
+]
+
+(*******************************************************************
+Cached data follows.  If you edit this Notebook file directly, not
+using Mathematica, you must remove the line containing CacheID at
+the top of  the file.  The cache data will then be recreated when
+you save this file from within Mathematica.
+*******************************************************************)
+
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+
+(*NotebookFileOutline
+Notebook[{
+Cell[1754, 51, 32, 0, 32, "Text"],
+Cell[1789, 53, 185, 5, 75, "Input"],
+Cell[1977, 60, 32, 0, 32, "Text"],
+
+Cell[CellGroupData[{
+Cell[2034, 64, 187, 4, 84, "Input"],
+Cell[2224, 70, 41, 1, 27, "Output"]
+}, Open  ]],
+Cell[2280, 74, 32, 0, 32, "Text"],
+
+Cell[CellGroupData[{
+Cell[2337, 78, 80, 1, 27, "Input"],
+Cell[2420, 81, 38, 1, 27, "Output"]
+}, Open  ]],
+Cell[2473, 85, 32, 0, 32, "Text"],
+Cell[2508, 87, 162, 3, 43, "Input"],
+
+Cell[CellGroupData[{
+Cell[2695, 94, 266, 6, 91, "Input"],
+Cell[2964, 102, 40, 1, 27, "Output"]
+}, Open  ]],
+Cell[3019, 106, 32, 0, 32, "Text"],
+
+Cell[CellGroupData[{
+Cell[3076, 110, 328, 7, 107, "Input"],
+Cell[3407, 119, 43, 1, 27, "Output"]
+}, Open  ]],
+Cell[3465, 123, 32, 0, 32, "Text"],
+
+Cell[CellGroupData[{
+Cell[3522, 127, 203, 4, 144, "Input"],
+Cell[3728, 133, 42, 1, 27, "Output"]
+}, Open  ]],
+Cell[3785, 137, 32, 0, 32, "Text"],
+
+Cell[CellGroupData[{
+Cell[3842, 141, 194, 4, 75, "Input"],
+Cell[4039, 147, 40, 1, 27, "Output"]
+}, Open  ]],
+Cell[4094, 151, 32, 0, 32, "Text"],
+
+Cell[CellGroupData[{
+Cell[4151, 155, 239, 4, 88, "Input"],
+Cell[4393, 161, 36, 1, 23, "Print"],
+Cell[4432, 164, 36, 1, 23, "Print"],
+Cell[4471, 167, 36, 1, 23, "Print"],
+Cell[4510, 170, 41, 1, 23, "Print"]
+}, Open  ]],
+Cell[4566, 174, 33, 0, 32, "Text"],
+
+Cell[CellGroupData[{
+Cell[4624, 178, 193, 4, 65, "Input"],
+Cell[4820, 184, 46, 1, 27, "Output"]
+}, Open  ]],
+Cell[4881, 188, 33, 0, 32, "Text"],
+
+Cell[CellGroupData[{
+Cell[4939, 192, 63, 1, 32, "Input"],
+Cell[5005, 195, 38, 1, 27, "Output"]
+}, Open  ]],
+Cell[5058, 199, 33, 0, 32, "Text"],
+
+Cell[CellGroupData[{
+Cell[5116, 203, 64, 1, 27, "Input"],
+Cell[5183, 206, 37, 1, 27, "Output"]
+}, Open  ]],
+Cell[5235, 210, 33, 0, 32, "Text"],
+Cell[5271, 212, 450, 8, 141, "Input"],
+
+Cell[CellGroupData[{
+Cell[5746, 224, 277, 6, 125, "Input"],
+Cell[6026, 232, 40, 1, 27, "Output"],
+Cell[6069, 235, 37, 1, 27, "Output"]
+}, Open  ]],
+Cell[6121, 239, 33, 0, 32, "Text"],
+
+Cell[CellGroupData[{
+Cell[6179, 243, 61, 1, 54, "Input"],
+Cell[6243, 246, 3111, 39, 891, "Output"]
+}, Open  ]],
+Cell[9369, 288, 34, 0, 32, "Text"],
+Cell[9406, 290, 42, 1, 27, "Input"],
+Cell[9451, 293, 826, 16, 235, "Input"],
+
+Cell[CellGroupData[{
+Cell[10302, 313, 40, 1, 27, "Input"],
+Cell[10345, 316, 36, 1, 23, "Print"],
+Cell[10384, 319, 340, 5, 33, "Message"],
+Cell[10727, 326, 346, 5, 46, "Message"],
+Cell[11076, 333, 36, 1, 23, "Print"],
+Cell[11115, 336, 35, 1, 27, "Output"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+Cell[11187, 342, 610, 12, 187, "Input"],
+Cell[11800, 356, 50, 1, 23, "Print"],
+Cell[11853, 359, 50, 1, 23, "Print"],
+Cell[11906, 362, 49, 1, 23, "Print"],
+Cell[11958, 365, 50, 1, 23, "Print"],
+Cell[12011, 368, 50, 1, 23, "Print"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+Cell[12098, 374, 290, 7, 123, "Input"],
+Cell[12391, 383, 57, 1, 27, "Output"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+Cell[12485, 389, 52, 1, 43, "Input"],
+Cell[12540, 392, 45, 1, 27, "Output"]
+}, Open  ]]
+}
+]
+*)
+
+
+
+(*******************************************************************
+End of Mathematica Notebook file.
+*******************************************************************)
+
