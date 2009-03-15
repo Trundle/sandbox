@@ -2,6 +2,7 @@
 // A small brainfuck interpreter.
 //
 
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <string>
@@ -124,27 +125,25 @@ bool Interpreter::run(const std::string& code)
 int main(int argc, char *argv[])
 {
     std::string code;
-    switch (argc)
+    if (argc != 2)
     {
-        case 1:
-        {
-            // Read code from stdin
-            std::string line;
-            while (std::cin)
-            {
-                std::getline(std::cin, line);
-                code.append(line);
-            }
-            break;
-        }
+        std::cerr << "Usage: fbi <codefile>" << std::endl;
+        return 1;
+    }
+    
+    // Read code
+    std::ifstream instream(argv[1]);
+    if (!instream.is_open())
+    {
+        std::cerr << "Could not open file!" << std::endl;
+        return 1;
+    }
 
-        case 2:
-            code.assign(argv[1]);
-            break;
-
-        default:
-            std::cerr << "Usage: fbi [<code>]" << std::endl;
-            return 1;
+    std::string line;
+    while (!instream.eof())
+    {
+        std::getline(instream, line);
+        code.append(line);
     }
 
     Interpreter interpreter;
