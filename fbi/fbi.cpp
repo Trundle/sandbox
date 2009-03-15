@@ -52,7 +52,7 @@ bool Interpreter::run(const std::string& code)
     // First generate jump tables
     std::vector<std::string::const_iterator> from;
     std::map<std::string::const_iterator,
-            std::string::const_iterator> jump_from, jump_to;
+            std::string::const_iterator> jumps;
     for (std::string::const_iterator it=code.begin(); it != code.end(); ++it)
     {
         switch (*it)
@@ -64,11 +64,11 @@ bool Interpreter::run(const std::string& code)
             case ']':
                 if (!from.size())
                     return false;
-                jump_from[from.back()] = it;
-                jump_to[it] = from.back();
+                jumps[from.back()] = it;
                 from.pop_back();
         }
     }
+    std::vector<std::string::const_iterator> call_stack;
     for (std::string::const_iterator it=code.begin(); it != code.end(); ++it)
         switch (*it)
         {
@@ -90,7 +90,7 @@ bool Interpreter::run(const std::string& code)
 
             case '.':
                 std::cout << *cell_;
-                std::cout.flush();
+                //std::cout.flush();
                 continue;
 
             case ',':
@@ -99,12 +99,16 @@ bool Interpreter::run(const std::string& code)
 
             case '[':
                 if (!*cell_)
-                    it = jump_from[it];
+                    it = jumps[it];
+                else
+                    call_stack.push_back(it);
                 continue;
 
             case ']':
                 if (*cell_)
-                    it = jump_to[it];
+                    it = call_stack.back();
+                else
+                    call_stack.pop_back();
                 continue;
 
             case '\n':
