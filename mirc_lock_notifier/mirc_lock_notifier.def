@@ -1,0 +1,6 @@
+LIBRARY	"mirc_lock_notifier"
+
+EXPORTS
+	LoadDll
+	UnloadDll
+	Init
