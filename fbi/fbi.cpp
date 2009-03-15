@@ -84,7 +84,7 @@ bool Interpreter::run(const std::string& code)
             case '+':
                 ++*cell_;
                 continue;
-            
+
             case '-':
                 --*cell_;
                 continue;
@@ -111,12 +111,6 @@ bool Interpreter::run(const std::string& code)
                 else
                     call_stack.pop_back();
                 continue;
-
-            case '\n':
-                continue;
-
-            default:
-                return false;
         }
     return true;
 }
