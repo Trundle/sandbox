@@ -7,13 +7,13 @@
 
 struct LOADINFO
 {
-	DWORD mVersion;
-	HWND mHwnd;
-	BOOL mKeep;
+    DWORD mVersion;
+    HWND mHwnd;
+    BOOL mKeep;
 };
 
 const UINT WM_MCOMMAND = WM_USER + 200,
-	WM_MEVALUATE = WM_USER + 201;
+    WM_MEVALUATE = WM_USER + 201;
 
 const unsigned int CMDMODE_EDITBOX = 1,
     CMDMODE_EDITBOX_PLAINTEXT = 2,
@@ -23,7 +23,7 @@ HWND mirc_hwnd, my_hwnd;
 HINSTANCE hinst;
 
 void send_to_mirc(HWND hwnd, const std::string& cmd,
-                  unsigned int mode = CMDMODE_EDITBOX)
+                unsigned int mode = CMDMODE_EDITBOX)
 {
     HANDLE handle = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL,
         PAGE_READWRITE, 0, (std::min)(1024u, cmd.size() + 1u), "mIRC999");
@@ -39,19 +39,19 @@ void send_to_mirc(HWND hwnd, const std::string& cmd,
 
 LRESULT WINAPI wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	if (mirc_hwnd && msg == WM_WTSSESSION_CHANGE)
-	{
-		if (wParam == WTS_SESSION_LOCK)
-		{
-			send_to_mirc(mirc_hwnd, "/on_windows_lock");
-			return 0;
-		}
-		else if (wParam == WTS_SESSION_UNLOCK)
-		{
-			send_to_mirc(mirc_hwnd, "/on_windows_unlock");
-			return 0;
-		}
-	}
+    if (mirc_hwnd && msg == WM_WTSSESSION_CHANGE)
+    {
+        if (wParam == WTS_SESSION_LOCK)
+        {
+            send_to_mirc(mirc_hwnd, "/on_windows_lock");
+            return 0;
+        }
+        else if (wParam == WTS_SESSION_UNLOCK)
+        {
+            send_to_mirc(mirc_hwnd, "/on_windows_unlock");
+            return 0;
+        }
+    }
 
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }
@@ -61,7 +61,7 @@ void __stdcall LoadDll(LOADINFO* t)
     t->mKeep = TRUE;
     mirc_hwnd = t->mHwnd;
 
-	WNDCLASSEX wsex;
+    WNDCLASSEX wsex;
     wsex.cbSize = sizeof(WNDCLASSEX);
     wsex.hInstance = hinst;
     wsex.style = CS_VREDRAW | CS_HREDRAW;
@@ -84,18 +84,18 @@ void __stdcall LoadDll(LOADINFO* t)
 
 int __stdcall UnloadDll(int mTimeout)
 {
-	if (mTimeout)
-		return 0;
+    if (mTimeout)
+        return 0;
 
-	WTSUnRegisterSessionNotification(my_hwnd);
+    WTSUnRegisterSessionNotification(my_hwnd);
     DestroyWindow(my_hwnd);
 
-	return 1;
+    return 1;
 }
 
 int __stdcall Init(HWND, HWND, char*, char*, BOOL, BOOL)
 {
-	return 0;
+    return 0;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID)
@@ -104,10 +104,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID)
     {
         case DLL_PROCESS_ATTACH:
         {
-			hinst = hinstDLL;
+            hinst = hinstDLL;
             break;
         }
-	}
+    }
 
     return TRUE;
 }
