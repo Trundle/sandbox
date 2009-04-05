@@ -1,0 +1,7 @@
+exe lp : main.cpp
+    :
+    <cflags>"`pkg-config cairomm-1.0 gtkmm-2.4 libglademm-2.4 --cflags`"
+    <linkflags>"`pkg-config cairomm-1.0 gtkmm-2.4 libglademm-2.4 --libs`"
+    ;
+
+install . : lp ; 

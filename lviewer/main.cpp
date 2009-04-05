@@ -244,7 +244,7 @@ void LSystemDrawingArea::on_word_changed()
     context->paint();
     // Draw the LSystem
     context->set_source_rgb(0, 1, 0);
-    Cairo::Matrix matrix = {1, 0, 0, -1, width / 2, height};
+    Cairo::Matrix matrix(1, 0, 0, -1, width / 2, height);
     context->transform(matrix);
     context->begin_new_path();
     context->move_to(0, height / 2);
