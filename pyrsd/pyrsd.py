@@ -4,6 +4,7 @@
 from __future__ import division, with_statement
 
 import re
+import shutil
 import sys
 import traceback
 
@@ -12,6 +13,7 @@ from base64 import b64decode
 from contextlib import closing
 from datetime import datetime, timedelta
 from os.path import basename, curdir, exists, join as pjoin
+from tempfile import TemporaryFile
 from time import sleep, time as ttime
 from urllib2 import URLError, build_opener, install_opener, urlopen
 
@@ -57,7 +59,7 @@ def download(url, outdir):
     sleep(timeout)
     # Retrieve URL
     with closing(urlopen(dl_url)) as connection:
-        with open(path, 'wb') as outfile:
+        with TemporaryFile('w+b') as outfile:
             leeched = 0
             size = int(connection.info()['content-length'])
             starttime = ttime()
@@ -74,6 +76,10 @@ def download(url, outdir):
                                  (leeched / size * 100, speed))
                 sys.stdout.flush()
                 outfile.write(data)
+
+            outfile.seek(0)
+            with open(path, 'wb') as routfile:
+                shutil.copyfileobj(outfile, routfile)
     print
 
 
@@ -87,7 +93,7 @@ def decode_rsdf(filename):
     cipher = AES.new(key, AES.MODE_ECB)
     iv = unhexlify('F'*32)
     iv = cipher.encrypt(iv)
-    aes_obj = AES.new(key, AES.MODE_CFB,iv)
+    aes_obj = AES.new(key, AES.MODE_CFB, iv)
 
     urls = []
     with open(filename) as rsd_file:
