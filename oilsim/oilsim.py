@@ -255,8 +255,8 @@ def main():
         print
 
     with open('data.txt', 'w') as f:
-        for k in rstats.keys():
-            print_mat(k, rstats[k], f)
+        for k, v in rstats.iteritems():
+            print_mat(k, v, f)
 
 if __name__ == "__main__":
     main()
