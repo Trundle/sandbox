@@ -18,20 +18,72 @@ ROUNDS = 1000*12
 """ the cost of operationg a pump per month """
 PUMP_MAINTENANCE_COST = 100
 
+def _flatten(lol):
+    for i in lol:
+        if isinstance(i, (tuple, list)):
+            for t in _flatten(i):
+                yield t
+        else:
+            yield i
+
+def flatten(lol):
+    """ Flattens tuples and lists. """
+    return list(_flatten(lol)) if isinstance(lol, list) else tuple(_flatten(lol))
+
 class PayoffMatrix(object):
-    def __init__(self, market, p1, p2):
+    def __init__(self, market, player1, player2):
+        self.player1 = player1
+        self.player2 = player2
+
         self.pm = {'BB': 0, 'B0': 0, 'BS': 0,
                    '0B': 0, '00': 0, '0S': 0,
                    'SB': 0, 'S0': 0, 'SS': 0}
 
         supply = market.supply
         demand = market.demand
-        # relsup = demand/supply - 1
 
-        # p1share = p1.producer.oil_output/supply
-        # p2share = p2.producer.oil_output/supply
+        # revenue, oil sold, potential
+        p1r, p1s, p1p, p2r, p2s, p2p = market.revenue(player1.pumps, player2.pumps)
+        self.pm['00'] = (0, 0)
+        
+        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1.pumps - 1, player2.pumps - 1)
+        self.pm['SS'] = (p1rt - p1r, p2rt - p2r)
 
+        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1.pumps - 1, player2.pumps)
+        self.pm['S0'] = (p1rt - p1r, p2rt - p2r)
+        
+        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1.pumps - 1, player2.pumps + 1)
+        self.pm['SB'] = (p1rt - p1r, p2rt - p2r)
 
+        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1.pumps, player2.pumps - 1)
+        self.pm['0S'] = (p1rt - p1r, p2rt - p2r)
+
+        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1.pumps, player2.pumps + 1)
+        self.pm['0B'] = (p1rt - p1r, p2rt - p2r)
+
+        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1.pumps + 1, player2.pumps - 1)
+        self.pm['BS'] = (p1rt - p1r, p2rt - p2r)
+
+        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1.pumps + 1, player2.pumps)
+        self.pm['B0'] = (p1rt - p1r, p2rt - p2r)
+        
+        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1.pumps + 1, player2.pumps + 1)
+        self.pm['BB'] = (p1rt - p1r, p2rt - p2r)
+
+    def __str__(self):
+        str = "   |                      B |                      0 |                      S \n" \
+            " B | %10.2f, %10.2f | %10.2f, %10.2f | %10.2f, %10.2f\n" \
+            " 0 | %10.2f, %10.2f | %10.2f, %10.2f | %10.2f, %10.2f\n" \
+            " S | %10.2f, %10.2f | %10.2f, %10.2f | %10.2f, %10.2f\n" \
+            % flatten(self.pm[k] for k in ('BB', 'B0', 'BS', '0B', '00', '0S', 'SB', 'S0', 'SS'))
+
+        return str
+
+    def getdata(self, player, act):
+        if player.name == self.player1.name:
+            return (self.pm[act + 'B'], self.pm[act + '0'], self.pm[act + 'S'])
+        else:
+            return map(reversed, (self.pm['B' + act], self.pm['0' + act], self.pm['S' + act]))
 
 class OilProducer(object):
     def __init__(self, initialpumps, initialmoney, name=None):
@@ -88,6 +140,7 @@ class Strategy(object):
                           self.producer.dmoney, self.producer.pumps,
                           output)
 
+    name = property(lambda self: self.producer.name)
     pumps = property(lambda self: self.producer.pumps)
     money = property(lambda self: self.producer.money)
 
@@ -98,9 +151,28 @@ class RandomStrategy(Strategy):
     def decide(self, pm, market):
         i = random.randint(0,2)
         if i == 1 and self.producer.pumps > 1:
-            self.producer.sell_pump(market)
+            return 'S'
         elif i == 2:
-            self.producer.buy_pump(market)
+            return 'B'
+        return '0'
+
+class TakeBestStrategy(Strategy):
+    def __init__(self, producer):
+        Strategy.__init__(self, producer)
+
+    def decide(self, pm, market):
+        def max1(l):
+            return max(x[0] for x in l)
+
+        b = max(pm.getdata(self, 'B'))
+        z = max(pm.getdata(self, '0'))
+        s = max(pm.getdata(self, 'S'))
+        m = max(b, z, s)
+        if m == b:
+            return 'B'
+        elif m == s:
+            return 'S'
+        return '0'
 
 class SimpleOilPriceModell(object):
     def __init__(self, factor):
@@ -150,6 +222,9 @@ class Market(object):
     def revenue(self, pumpsp1, pumpsp2):
         """ Calculate revenues of player 1 and 2 based on their pumps. """
 
+        if pumpsp1 + pumpsp2 == 0:
+            return (0, 0, 0, 0, 0, 0)
+
         # calculate the relative sizes
         p1s = pumpsp1 / (pumpsp1 + pumpsp2)
         p2s = 1 - p1s
@@ -178,7 +253,7 @@ class PlayerStat(object):
         self.potential = potential
 
     def __str__(self):
-        return "\t%s:\n\t\tmoney: %f\n\t\tdmoney: %f\n\t\tpumps: %d\n\t\tsupply: %f (potential: %f)\n" \
+        return "\t%s:\n\t\tmoney:  %10.2f\n\t\tdmoney: %10.2f\n\t\tpumps:  %d\n\t\tsupply: %10.2f (potential: %10.2f)\n" \
             % (self.name, self.money, self.moneydiff, self.pumps, self.supply, self.potential)
         
 
@@ -192,7 +267,7 @@ class RoundStat(object):
         self.player_stats = player_stats
 
     def __str__(self):
-        str_ = "round %d:\n\toil price: %f\n\toil demand: %f\n\toil supply: %f (potential: %f)\n" \
+        str_ = "round %d:\n\toil price:  %10.2f\n\toil demand: %10.2f\n\toil supply: %10.2f (potential: %10.2f)\n" \
                 % (self.round, self.price, self.demand, self.supply, self.potential)
         for stat in self.player_stats:
             str_ += str(stat)
@@ -209,8 +284,8 @@ def main():
     market = Market(10000000, opm, pm)
     producer1 = OilProducer(10, 10000, 'Player 1')
     producer2 = OilProducer(10, 10000, 'Player 2')
-    player1 = RandomStrategy(producer1)
-    player2 = RandomStrategy(producer2)
+    player1 = TakeBestStrategy(producer1) # RandomStrategy(producer1)
+    player2 = TakeBestStrategy(producer2) # RandomStrategy(producer2)
     market.update(0, 0, (player1.pumps + player2.pumps) * market.pump_output) # we need to start with some inital value
 
     rstats = defaultdict(list) 
@@ -221,12 +296,25 @@ def main():
     for rnum in xrange(ROUNDS):
         print 'in round %d' % rnum
         
-        pm = PayoffMatrix(market, producer1, producer2)
+        pm = PayoffMatrix(market, player1, player2)
+        print 'payoff matrix:'
+        print str(pm)
+
         player1.begin_round()
         player2.begin_round()
 
-        player1.decide(pm, market)
-        player2.decide(pm, market)
+        p1d = player1.decide(pm, market)
+        p2d = player2.decide(pm, market)
+
+        if p1d == 'B':
+            player1.producer.buy_pump(market)
+        elif p1d == 'S':
+            player1.producer.sell_pump(market)
+        
+        if p2d == 'B':
+            player2.producer.buy_pump(market)
+        elif p1d == 'S':
+            player2.producer.sell_pump(market)
 
         # revenue, oil sold, potential
         p1r, p1s, p1p, p2r, p2s, p2p = market.revenue(player1.pumps, player2.pumps)
@@ -259,5 +347,8 @@ def main():
             print_mat(k, v, f)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
 
