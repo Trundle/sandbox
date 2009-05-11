@@ -83,7 +83,7 @@ class PayoffMatrix(object):
         if player.name == self.player1.name:
             return (self.pm[act + 'B'], self.pm[act + '0'], self.pm[act + 'S'])
         else:
-            return map(reversed, (self.pm['B' + act], self.pm['0' + act], self.pm['S' + act]))
+            return map(list, map(reversed, (self.pm['B' + act], self.pm['0' + act], self.pm['S' + act])))
 
 class OilProducer(object):
     def __init__(self, initialpumps, initialmoney, name=None):
@@ -164,9 +164,9 @@ class TakeBestStrategy(Strategy):
         def max1(l):
             return max(x[0] for x in l)
 
-        b = max(pm.getdata(self, 'B'))
-        z = max(pm.getdata(self, '0'))
-        s = max(pm.getdata(self, 'S'))
+        b = max1(pm.getdata(self, 'B'))
+        z = max1(pm.getdata(self, '0'))
+        s = max1(pm.getdata(self, 'S'))
         m = max(b, z, s)
         if m == b:
             return 'B'
@@ -178,17 +178,29 @@ class SimpleOilPriceModell(object):
     def __init__(self, factor):
         self.factor = factor
 
-    def update(self, round, act_supply, supply):
-        self.round = round
-        self.demand = 200 + round / 10
+    def update(self, round, demand, act_supply, supply):
+        self.demand = demand
         self.supply = supply
 
-    @property
-    def price(self):
         try:
-            return self.factor * self.demand / self.supply
+            self.price = self.factor * self.demand / self.supply
         except ZeroDivisionError:
-            return self.factor * self.demand / 10**-8
+            self.price = self.factor * self.demand / 10**-8
+
+class ConstantDemandModell(object):
+    def __init__(self, demand=200):
+        self.demand = 200
+
+    def update(self, *args):
+        pass
+
+class LinearDemandModell(object):
+    def __init__(self, d=200, k=1/10):
+        self.d = d
+        self.k = k
+
+    def update(self, round, *args):
+        self.demand = self.k * round + self.d
 
 class ConstantPumpModell(object):
     def __init__(self, buy_price, sell_price, maintenance_cost, output):
@@ -201,18 +213,20 @@ class ConstantPumpModell(object):
         pass
 
 class Market(object):
-    def __init__(self, total_oil, oil_modell, pump_modell):
+    def __init__(self, total_oil, oil_modell, pump_modell, demand_modell):
         self.total_oil = total_oil
         self.oil_modell = oil_modell
         self.pump_modell = pump_modell
+        self.demand_modell = demand_modell
     
     def update(self, round, act_supply, supply):
         self.supply = supply
-        self.oil_modell.update(round, act_supply, supply)
-        self.pump_modell.update(round, act_supply, supply)
+        self.demand_modell.update(round, act_supply, supply)
+        self.oil_modell.update(round, self.demand, act_supply, supply)
+        self.pump_modell.update(round, self.demand, act_supply, supply)
         self.total_oil -= act_supply
 
-    demand = property(lambda self: self.oil_modell.demand)
+    demand = property(lambda self: self.demand_modell.demand)
     oil_price = property(lambda self: self.oil_modell.price)
     pump_buy_price = property(lambda self: self.pump_modell.buy_price)
     pump_sell_price = property(lambda self: self.pump_modell.sell_price)
@@ -281,7 +295,7 @@ def print_mat(n, m, f=sys.stdout):
 def main():
     opm = SimpleOilPriceModell(100)
     pm = ConstantPumpModell(PUMP_BUY_PRICE, PUMP_SELL_PRICE, PUMP_MAINTENANCE_COST, PUMP_OUTPUT)
-    market = Market(10000000, opm, pm)
+    market = Market(10000000, opm, pm, LinearDemandModell())
     producer1 = OilProducer(10, 10000, 'Player 1')
     producer2 = OilProducer(10, 10000, 'Player 2')
     player1 = TakeBestStrategy(producer1) # RandomStrategy(producer1)
@@ -313,7 +327,7 @@ def main():
         
         if p2d == 'B':
             player2.producer.buy_pump(market)
-        elif p1d == 'S':
+        elif p2d == 'S':
             player2.producer.sell_pump(market)
 
         # revenue, oil sold, potential
