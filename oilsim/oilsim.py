@@ -3,20 +3,12 @@
 from __future__ import division, with_statement
 
 from collections import defaultdict
+from math import cos, sin, pi, log
 
 import random
+import os
+import os.path
 import sys
-
-""" price of a new pump """
-PUMP_BUY_PRICE = 1000
-""" value of an pump """
-PUMP_SELL_PRICE = PUMP_BUY_PRICE
-""" liters of oil produced by one pump / per month """
-PUMP_OUTPUT = 100
-""" total amount of rounds to play (note: 1 round = 1 month) """
-ROUNDS = 1000*12
-""" the cost of operationg a pump per month """
-PUMP_MAINTENANCE_COST = 100
 
 def _flatten(lol):
     for i in lol:
@@ -43,32 +35,34 @@ class PayoffMatrix(object):
         demand = market.demand
 
         # revenue, oil sold, potential
-        p1r, p1s, p1p, p2r, p2s, p2p = market.revenue(player1.pumps, player2.pumps)
-        self.pm['00'] = (0, 0)
+        p1r, p1s, p1p, p2r, p2s, p2p = market.revenue(player1, player2)
+        self.pm['00'] = (p1r, p2r)
+        p1r = 0
+        p2r = 0
         
-        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1.pumps - 1, player2.pumps - 1)
-        self.pm['SS'] = (p1rt - p1r, p2rt - p2r)
+        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1, player2, -1, -1)
+        self.pm['SS'] = (p1rt - p1r + market.pump_sell_price, p2rt - p2r + market.pump_sell_price)
 
-        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1.pumps - 1, player2.pumps)
-        self.pm['S0'] = (p1rt - p1r, p2rt - p2r)
+        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1, player2, -1, 0)
+        self.pm['S0'] = (p1rt - p1r + market.pump_sell_price, p2rt - p2r)
         
-        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1.pumps - 1, player2.pumps + 1)
-        self.pm['SB'] = (p1rt - p1r, p2rt - p2r)
+        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1, player2, -1, 1)
+        self.pm['SB'] = (p1rt - p1r + market.pump_sell_price, p2rt - p2r - market.pump_buy_price)
 
-        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1.pumps, player2.pumps - 1)
-        self.pm['0S'] = (p1rt - p1r, p2rt - p2r)
+        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1, player2, 0, -1)
+        self.pm['0S'] = (p1rt - p1r, p2rt - p2r + market.pump_sell_price)
 
-        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1.pumps, player2.pumps + 1)
-        self.pm['0B'] = (p1rt - p1r, p2rt - p2r)
+        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1, player2, 0, 1)
+        self.pm['0B'] = (p1rt - p1r, p2rt - p2r - market.pump_buy_price)
 
-        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1.pumps + 1, player2.pumps - 1)
-        self.pm['BS'] = (p1rt - p1r, p2rt - p2r)
+        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1, player2, 1, -1)
+        self.pm['BS'] = (p1rt - p1r - market.pump_buy_price , p2rt - p2r + market.pump_sell_price)
 
-        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1.pumps + 1, player2.pumps)
-        self.pm['B0'] = (p1rt - p1r, p2rt - p2r)
+        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1, player2, 1, 0)
+        self.pm['B0'] = (p1rt - p1r - market.pump_buy_price, p2rt - p2r)
         
-        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1.pumps + 1, player2.pumps + 1)
-        self.pm['BB'] = (p1rt - p1r, p2rt - p2r)
+        p1rt, p1s, p1p, p2rt, ps2, p2p = market.revenue(player1, player2, 1, 1)
+        self.pm['BB'] = (p1rt - p1r - market.pump_buy_price, p2rt - p2r - market.pump_buy_price)
 
     def __str__(self):
         str = "   |                      B |                      0 |                      S \n" \
@@ -91,6 +85,7 @@ class OilProducer(object):
         self.money = initialmoney
         self.oldmoney = initialmoney
         self.dmoney = 0
+        self.stash = 0
         if name is None:
             self.name = 'unnamed oil producer'
         else:
@@ -123,6 +118,7 @@ class OilProducer(object):
     def end_round(self, revenue):
         self.money += revenue
         self.dmoney = self.money - self.oldmoney
+        # self.stash += stash
 
     def __str__(self):
         return self.name
@@ -140,9 +136,11 @@ class Strategy(object):
                           self.producer.dmoney, self.producer.pumps,
                           output)
 
+
     name = property(lambda self: self.producer.name)
     pumps = property(lambda self: self.producer.pumps)
     money = property(lambda self: self.producer.money)
+    stash = property(lambda self: self.producer.stash)
 
 class RandomStrategy(Strategy):
     def __init__(self, producer):
@@ -156,17 +154,20 @@ class RandomStrategy(Strategy):
             return 'B'
         return '0'
 
+def maxl(l):
+    return max(x[0] for x in l)
+
+def minl(l):
+    return min(x[0] for x in l)
+
 class TakeBestStrategy(Strategy):
     def __init__(self, producer):
         Strategy.__init__(self, producer)
 
     def decide(self, pm, market):
-        def max1(l):
-            return max(x[0] for x in l)
-
-        b = max1(pm.getdata(self, 'B'))
-        z = max1(pm.getdata(self, '0'))
-        s = max1(pm.getdata(self, 'S'))
+        b = maxl(pm.getdata(self, 'B'))
+        z = maxl(pm.getdata(self, '0'))
+        s = maxl(pm.getdata(self, 'S'))
         m = max(b, z, s)
         if m == b:
             return 'B'
@@ -174,22 +175,41 @@ class TakeBestStrategy(Strategy):
             return 'S'
         return '0'
 
+class MinmaxStrategy(Strategy):
+    def __init__(self, producer):
+        Strategy.__init__(self, producer)
+
+    def decide(self, pm, market):
+        b = minl(pm.getdata(self, 'B'))
+        z = minl(pm.getdata(self, '0'))
+        s = minl(pm.getdata(self, 'S'))
+        m = max(b, z, s)
+        if m == b:
+            return 'B'
+        elif m == s:
+            return 'S'
+        return '0'
+
+class DoNothingStrategy(Strategy):
+    def __init__(self, producer):
+        Strategy.__init__(self, producer)
+
+    def decide(self, *args):
+        return '0'
+
 class SimpleOilPriceModell(object):
     def __init__(self, factor):
         self.factor = factor
 
     def update(self, round, demand, act_supply, supply):
-        self.demand = demand
-        self.supply = supply
-
         try:
-            self.price = self.factor * self.demand / self.supply
+            self.price = self.factor * demand / (supply)
         except ZeroDivisionError:
-            self.price = self.factor * self.demand / 10**-8
+            self.price = self.factor * demand / 10**-8
 
 class ConstantDemandModell(object):
     def __init__(self, demand=200):
-        self.demand = 200
+        self.demand = demand
 
     def update(self, *args):
         pass
@@ -202,6 +222,15 @@ class LinearDemandModell(object):
     def update(self, round, *args):
         self.demand = self.k * round + self.d
 
+class LinearCosDemandModell(object):
+    def __init__(self, d=200, k=1/10, alpha=1/12):
+        self.d = d
+        self.k = k
+        self.alpha = alpha
+
+    def update(self, round, *args):
+        self.demand = self.k * cos(self.alpha * pi * round) + self.d
+
 class ConstantPumpModell(object):
     def __init__(self, buy_price, sell_price, maintenance_cost, output):
         self.buy_price = buy_price
@@ -212,6 +241,17 @@ class ConstantPumpModell(object):
     def update(self, *args):
         pass
 
+class LogPumpModel(object):
+    def __init__(self, buy_price, sell_price, start_maintenance_cost, total_oil, output):
+        self.buy_price = buy_price
+        self.sell_price = sell_price
+        self.smc = start_maintenance_cost
+        self.sto = 100*log(total_oil)
+        self.output = output
+
+    def update(self, round, demand, supply, potential, total_oil):
+        self.maintenance_cost = -100*log(total_oil) + self.smc + self.sto
+
 class Market(object):
     def __init__(self, total_oil, oil_modell, pump_modell, demand_modell):
         self.total_oil = total_oil
@@ -220,12 +260,18 @@ class Market(object):
         self.demand_modell = demand_modell
     
     def update(self, round, act_supply, supply):
+        self.round = round
         self.supply = supply
+        self.act_supply = act_supply
+        self.total_oil -= act_supply
+        if self.total_oil <= 0:
+            return False
+
         self.demand_modell.update(round, act_supply, supply)
         self.oil_modell.update(round, self.demand, act_supply, supply)
-        self.pump_modell.update(round, self.demand, act_supply, supply)
-        self.total_oil -= act_supply
-
+        self.pump_modell.update(round, self.demand, act_supply, supply, self.total_oil)
+        return True
+       
     demand = property(lambda self: self.demand_modell.demand)
     oil_price = property(lambda self: self.oil_modell.price)
     pump_buy_price = property(lambda self: self.pump_modell.buy_price)
@@ -233,8 +279,12 @@ class Market(object):
     pump_output = property(lambda self: self.pump_modell.output)
     pump_maintenance_cost = property(lambda self: self.pump_modell.maintenance_cost)
 
-    def revenue(self, pumpsp1, pumpsp2):
+    def revenue(self, player1, player2, pd1=0, pd2=0):
         """ Calculate revenues of player 1 and 2 based on their pumps. """
+        pumpsp1 = player1.pumps + pd1
+        pumpsp2 = player2.pumps + pd2
+        stash1 = player1.stash
+        stash2 = player2.stash
 
         if pumpsp1 + pumpsp2 == 0:
             return (0, 0, 0, 0, 0, 0)
@@ -248,13 +298,18 @@ class Market(object):
         p2o = pumpsp2 * self.pump_output
 
         # amount of sold oil (total and per player)
-        oilsold = min(p1o + p2o, self.demand)
+        oilsold = min(p1o + p2o + stash1 + stash2, self.demand)
         p1s = p1s * oilsold
         p2s = p2s * oilsold
 
         # revene of both players
+        if pd1 != 0 or pd2 != 0:
+            self.oil_modell.update(self.round + 1, self.demand, p1s + p2s, p1o + p2o)
+
         p1r = self.oil_price * p1s - self.pump_maintenance_cost * pumpsp1
         p2r = self.oil_price * p2s - self.pump_maintenance_cost * pumpsp2
+
+        self.oil_modell.update(self.round, self.demand, self.act_supply, self.supply)
         return (p1r, p1s, p1o, p2r, p2s, p2o)
 
 class PlayerStat(object):
@@ -292,14 +347,27 @@ class RoundStat(object):
 def print_mat(n, m, f=sys.stdout):
       f.write("%s = %s;\n" % (n, str(m).replace('[', '{').replace(']', '}')))
 
+""" price of a new pump """
+PUMP_BUY_PRICE = 1000
+""" value of an pump """
+PUMP_SELL_PRICE = PUMP_BUY_PRICE
+""" liters of oil produced by one pump / per month """
+PUMP_OUTPUT = 100
+""" total amount of rounds to play (note: 1 round = 1 month) """
+ROUNDS = 1000*12 # 1000*12
+""" the cost of operationg a pump per month """
+PUMP_MAINTENANCE_COST = 100
+OIL_SOURCE_SIZE = 20000*1000
+
 def main():
-    opm = SimpleOilPriceModell(100)
-    pm = ConstantPumpModell(PUMP_BUY_PRICE, PUMP_SELL_PRICE, PUMP_MAINTENANCE_COST, PUMP_OUTPUT)
-    market = Market(10000000, opm, pm, LinearDemandModell())
+    opm = SimpleOilPriceModell(10)
+    # pm = ConstantPumpModell(PUMP_BUY_PRICE, PUMP_SELL_PRICE, PUMP_MAINTENANCE_COST, PUMP_OUTPUT)
+    pm = LogPumpModel(PUMP_BUY_PRICE, PUMP_SELL_PRICE, PUMP_MAINTENANCE_COST, OIL_SOURCE_SIZE, PUMP_OUTPUT)
+    market = Market(OIL_SOURCE_SIZE, opm, pm, LinearDemandModell(3000,5))
     producer1 = OilProducer(10, 10000, 'Player 1')
-    producer2 = OilProducer(10, 10000, 'Player 2')
-    player1 = TakeBestStrategy(producer1) # RandomStrategy(producer1)
-    player2 = TakeBestStrategy(producer2) # RandomStrategy(producer2)
+    producer2 = OilProducer(20, 10000, 'Player 2')
+    player1 = MinmaxStrategy(producer1) # RandomStrategy(producer1)
+    player2 = MinmaxStrategy(producer2) # RandomStrategy(producer2)
     market.update(0, 0, (player1.pumps + player2.pumps) * market.pump_output) # we need to start with some inital value
 
     rstats = defaultdict(list) 
@@ -331,12 +399,14 @@ def main():
             player2.producer.sell_pump(market)
 
         # revenue, oil sold, potential
-        p1r, p1s, p1p, p2r, p2s, p2p = market.revenue(player1.pumps, player2.pumps)
+        p1r, p1s, p1p, p2r, p2s, p2p = market.revenue(player1, player2)
         stat = [player1.end_round(p1r, p1s), player2.end_round(p2r, p2s)]
         stat[0].potential = p1p
         stat[1].potential = p2p
 
-        market.update(rnum + 1, p1s + p2s, p1p + p2p)
+        if not market.update(rnum + 1, p1s + p2s, p1p + p2p): # player1.stash + player2.stash)
+            print "oil source is empty"
+            break
 
         rstats['player1pumps'].append(player1.pumps)
         rstats['player2pumps'].append(player2.pumps)
@@ -350,12 +420,19 @@ def main():
         rstats['player2money'].append(player2.money)
         rstats['oilprice'].append(market.oil_price)
         rstats['oildemand'].append(market.demand)
+        rstats['player1stash'].append(player1.stash)
+        rstats['player2stash'].append(player2.stash)
+        rstats['oilsource'].append(market.total_oil)
+        rstats['pumpmaintcost'].append(market.pump_maintenance_cost)
 
         stats.update({rnum: RoundStat(rnum, market.oil_price, market.demand,
                                       market.supply, p1p + p2p, stat)})
         print stats[rnum]
         print
 
+    if os.path.exists('data.txt'):
+        s = os.stat('data.txt')
+        os.rename('data.txt', 'data.%d.txt' % s.st_mtime)
     with open('data.txt', 'w') as f:
         for k, v in rstats.iteritems():
             print_mat(k, v, f)
