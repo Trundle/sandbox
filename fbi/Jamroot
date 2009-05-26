@@ -1,2 +1,2 @@
 exe fbi : fbi.cpp ;
-install .  : fbi ; 
+install . : fbi ;
