@@ -77,6 +77,11 @@ def download(url, outdir):
                 sys.stdout.flush()
                 outfile.write(data)
 
+            # XXX: this probably needs proper handling (within urllib?)
+            if leeched != size:
+                print "\t... the download could have failed!" \
+                    "(possible timeout, check file size)"
+
             outfile.seek(0)
             with open(path, 'wb') as routfile:
                 shutil.copyfileobj(outfile, routfile)
@@ -140,7 +145,8 @@ def main(args=sys.argv[1:]):
         except InvalidRSURL:
             print '\t... failed (invalid URL)'
         except URLError:
-            print '\t... failed'
+            print '\t... failed with ...'
+            traceback.print_exc()
         except KeyboardInterrupt:
             raise
         except:
