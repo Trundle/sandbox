@@ -79,6 +79,12 @@ class PayoffMatrix(object):
         else:
             return map(list, map(reversed, (self.pm['B' + act], self.pm['0' + act], self.pm['S' + act])))
 
+    def sum(self, player, act):
+        return map(sum, self.getdata(player, act))
+
+    def sums(self, player):
+        return {'B': self.sum(player, 'B'), '0': self.sum(player, '0'), 'S': self.sum(player, 'S')}
+
 class OilProducer(object):
     def __init__(self, initialpumps, initialmoney, name=None):
         self.pumps = initialpumps
@@ -170,9 +176,9 @@ class TakeBestStrategy(Strategy):
         Strategy.__init__(self, producer)
 
     def decide(self, pm, market):
-        b = maxl(pm.getdata(self, 'B'))
+        b = maxl(pm.getdata(self, 'B')) if self.money >= market.pump_buy_price else -float('inf')
         z = maxl(pm.getdata(self, '0'))
-        s = maxl(pm.getdata(self, 'S'))
+        s = maxl(pm.getdata(self, 'S')) if self.pumps > 0 else -float('inf')
         m = max(b, z, s)
         if m == b:
             m = max(z, s)
@@ -194,11 +200,11 @@ class MinmaxStrategy(Strategy):
         Strategy.__init__(self, producer)
 
     def decide(self, pm, market):
-        b = minl(pm.getdata(self, 'B'))
+        b = minl(pm.getdata(self, 'B')) if self.money >= market.pump_buy_price else -float('inf')
         bm = maxl(pm.getdata(self, 'B'))
         z = minl(pm.getdata(self, '0'))
         zm = maxl(pm.getdata(self, '0'))
-        s = minl(pm.getdata(self, 'S'))
+        s = minl(pm.getdata(self, 'S')) if self.pumps > 0 else -float('inf')
         sm = maxl(pm.getdata(self, 'S'))
 
         m = max(b, z, s)
@@ -246,6 +252,29 @@ class MinmaxStrategy(Strategy):
         else:
             return '0BS'
 
+class MaxallStrategy(Strategy):
+    def __init__(self, producer):
+        Strategy.__init__(self, producer)
+
+    def decide(self, pm, market):
+        s = pm.sums(self)
+        bm = max(s['B']) if self.money >= market.pump_buy_price else -float('inf')
+        zm = max(s['0'])
+        sm = max(s['S']) if self.pumps > 0 else -float('inf')
+        m = max(bm, zm, sm)
+        if m == bm:
+            if max(zm, sm) == zm:
+                return 'B0S'
+            else:
+                return 'BS0'
+        elif m == sm:
+            if max(bm, zm) == bm:
+                return 'SB0'
+            else:
+                return 'S0B'
+        else:
+            return 'OBS'
+        
 class DoNothingStrategy(Strategy):
     def __init__(self, producer):
         Strategy.__init__(self, producer)
@@ -346,8 +375,8 @@ class Market(object):
 
     def revenue(self, player1, player2, pd1=0, pd2=0):
         """ Calculate revenues of player 1 and 2 based on their pumps. """
-        pumpsp1 = player1.pumps + pd1
-        pumpsp2 = player2.pumps + pd2
+        pumpsp1 = max(player1.pumps + pd1, 0)
+        pumpsp2 = max(player2.pumps + pd2, 0)
         stash1 = player1.stash
         stash2 = player2.stash
 
@@ -428,11 +457,11 @@ def print_mat(n, m, f=sys.stdout):
 """ price of a new pump """
 PUMP_BUY_PRICE = 1000
 """ value of an pump """
-PUMP_SELL_PRICE = PUMP_BUY_PRICE/2
+PUMP_SELL_PRICE = PUMP_BUY_PRICE/10
 """ liters of oil produced by one pump / per month """
 PUMP_OUTPUT = 100
 """ total amount of rounds to play (note: 1 round = 1 month) """
-ROUNDS = 5000*12 # 1000*12
+ROUNDS = 1000*12 # 1000*12
 """ the cost of operationg a pump per month """
 PUMP_MAINTENANCE_COST = 100
 OIL_SOURCE_SIZE = 20000*1000
@@ -442,10 +471,10 @@ def main():
     # pm = ConstantPumpModel(PUMP_BUY_PRICE, PUMP_SELL_PRICE, PUMP_MAINTENANCE_COST, PUMP_OUTPUT)
     pm = LogPumpModel(PUMP_BUY_PRICE, PUMP_SELL_PRICE, PUMP_MAINTENANCE_COST, OIL_SOURCE_SIZE, PUMP_OUTPUT)
     market = Market(OIL_SOURCE_SIZE, opm, pm, LinearDemandModel(2000,0), ConstantStashModel(PUMP_BUY_PRICE/10, 10*PUMP_BUY_PRICE))
-    producer1 = OilProducer(0, 10000, 'Player 1')
-    producer2 = OilProducer(1, 10000, 'Player 2')
-    player1 = MinmaxStrategy(producer1) # RandomStrategy(producer1)
-    player2 = MinmaxStrategy(producer2) # RandomStrategy(producer2)
+    producer1 = OilProducer(11, 10000, 'Player 1')
+    producer2 = OilProducer(10, 10000, 'Player 2')
+    player1 = MaxallStrategy(producer1) # RandomStrategy(producer1)
+    player2 = MaxallStrategy(producer2) # RandomStrategy(producer2)
     market.update(0, 0, (player1.pumps + player2.pumps) * market.pump_output) # we need to start with some inital value
 
     rstats = defaultdict(list) 
