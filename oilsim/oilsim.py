@@ -299,6 +299,16 @@ class ConstantDemandModel(object):
     def update(self, *args):
         pass
 
+class LinearDemandModelMinMax(object):
+    def __init__(self, mindemand, maxdemand, k, maxprice):
+        self.mindemand = mindemand
+        self.maxdemand = maxdemand
+        self.k = k
+        self.maxprice = maxprice
+
+    def update(self, round, oldprice, *args):
+        self.demand = min(self.maxdemand, -self.k * (oldprice - self.maxprice) + self.mindemand)
+
 class LinearDemandModel(object):
     def __init__(self, d=200, k=1/10):
         self.d = d
@@ -352,6 +362,9 @@ class Market(object):
         self.pump_model = pump_model
         self.demand_model = demand_model
         self.stash_model = stash_model
+
+        self.old_price = defaultdict()
+        self.old_price.setdefault(0)
     
     def update(self, round, act_supply, supply):
         self.round = round
@@ -361,9 +374,15 @@ class Market(object):
         if self.total_oil <= 0:
             return False
 
-        self.demand_model.update(round, act_supply, supply)
+        if round != 0:
+            self.demand_model.update(round, self.old_price[round - 1], act_supply, supply)
+        else:
+            self.oil_model.update(-1, 1, 1, 1)
+            self.demand_model.update(round, self.oil_price, act_supply, supply)
+
         self.oil_model.update(round, self.demand, act_supply, supply)
         self.pump_model.update(round, self.demand, act_supply, supply, self.total_oil)
+        self.old_price[round] = self.oil_price
         return True
        
     demand = property(lambda self: self.demand_model.demand)
@@ -470,7 +489,9 @@ def main():
     opm = SimpleOilPriceModel(10)
     # pm = ConstantPumpModel(PUMP_BUY_PRICE, PUMP_SELL_PRICE, PUMP_MAINTENANCE_COST, PUMP_OUTPUT)
     pm = LogPumpModel(PUMP_BUY_PRICE, PUMP_SELL_PRICE, PUMP_MAINTENANCE_COST, OIL_SOURCE_SIZE, PUMP_OUTPUT)
-    market = Market(OIL_SOURCE_SIZE, opm, pm, LinearDemandModel(2000,0), ConstantStashModel(PUMP_BUY_PRICE/10, 10*PUMP_BUY_PRICE))
+    # market = Market(OIL_SOURCE_SIZE, opm, pm, LinearDemandModel(2000,0), ConstantStashModel(PUMP_BUY_PRICE/10, 10*PUMP_BUY_PRICE))
+    market = Market(OIL_SOURCE_SIZE, opm, pm, LinearDemandModelMinMax(100, 5000, 1, 10 / 0.05), ConstantStashModel(PUMP_BUY_PRICE/10, 10*PUMP_BUY_PRICE))
+
     producer1 = OilProducer(11, 10000, 'Player 1')
     producer2 = OilProducer(10, 10000, 'Player 2')
     player1 = MaxallStrategy(producer1) # RandomStrategy(producer1)
