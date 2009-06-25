@@ -470,28 +470,28 @@ def print_mat(n, m, f=sys.stdout):
       f.write("%s = %s;\n" % (n, str(m).replace('[', '{').replace(']', '}')))
 
 """ price of a new pump """
-PUMP_BUY_PRICE = 100
+PUMP_BUY_PRICE = 10000
 """ value of an pump """
-PUMP_SELL_PRICE = PUMP_BUY_PRICE/10
+PUMP_SELL_PRICE = PUMP_BUY_PRICE
 """ liters of oil produced by one pump / per month """
 PUMP_OUTPUT = 100
 """ total amount of rounds to play (note: 1 round = 1 month) """
 ROUNDS = 10000 # 1000*12
 """ the cost of operationg a pump per month """
-PUMP_MAINTENANCE_COST = 10
+PUMP_MAINTENANCE_COST = 100
 OIL_SOURCE_SIZE = 1000000
 
 def main():
-    opm = SimpleOilPriceModel(10)
+    opm = SimpleOilPriceModel(1)
     # pm = ConstantPumpModel(PUMP_BUY_PRICE, PUMP_SELL_PRICE, PUMP_MAINTENANCE_COST, PUMP_OUTPUT)
-    pm = LogPumpModel(PUMP_BUY_PRICE, PUMP_SELL_PRICE, PUMP_MAINTENANCE_COST, OIL_SOURCE_SIZE, PUMP_OUTPUT, 40)
+    pm = LogPumpModel(PUMP_BUY_PRICE, PUMP_SELL_PRICE, PUMP_MAINTENANCE_COST, OIL_SOURCE_SIZE, PUMP_OUTPUT, 200)
     # market = Market(OIL_SOURCE_SIZE, opm, pm, LinearDemandModel(2000,0), ConstantStashModel(PUMP_BUY_PRICE/10, 10*PUMP_BUY_PRICE))
     market = Market(OIL_SOURCE_SIZE, opm, pm, LinearDemandModel(2000,0), ConstantStashModel(PUMP_BUY_PRICE/10, 10*PUMP_BUY_PRICE))
 
-    producer1 = OilProducer(15, 10000, 'Player 1')
+    producer1 = OilProducer(10, 10000, 'Player 1')
     producer2 = OilProducer(10, 10000, 'Player 2')
-    player1 = TakeBestStrategy(producer1) # RandomStrategy(producer1)
-    player2 = TakeBestStrategy(producer2) # RandomStrategy(producer2)
+    player1 = MinmaxStrategy(producer1) # RandomStrategy(producer1)
+    player2 = MinmaxStrategy(producer2) # RandomStrategy(producer2)
     market.update(0, 0, 0, (player1.pumps + player2.pumps) * market.pump_output) # we need to start with some inital value
 
     rstats = defaultdict(list) 
