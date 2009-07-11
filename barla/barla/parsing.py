@@ -215,7 +215,7 @@ def p_expression(tree):
     return left(tree.children[0], tree.children[1].children)
 
 def p_term(tree):
-    "Any(number, name)"
+    "Any(number, name, string)"
     return tree
 
 def p_name(tree):
@@ -223,17 +223,18 @@ def p_name(tree):
     return Name(tree.word)
 
 def p_number(tree):
-    r"Word(r'\d+')"
+    r"Word(r'[+-]?\d+')"
+    assert tree.word is not None
     value = int(tree.word)
     return Const(Int(value))
 
 def p_string(tree):
     r"""Word(r"'[^\n]*?'")"""
-    value = tree.word
-    return Const(Str(value))
+    value = tree.word[1:]
+    return Const(Str(value[:-1]))
 
 def p_assign_stmt(tree):
-    "Seq(name, '=', expression)"
+    "Seq(name, ':=', expression)"
     return Assign(tree.children[0].name, tree.children[2])
 
 def p_if_stmt(tree):
@@ -245,8 +246,8 @@ def p_while_stmt(tree):
     return While(tree.children[1], tree.children[2].children)
 
 def p_condition(tree):
-    "Seq(expression, Any('==', '!='), expression)"
-    return BinaryOp(tree.children[1].word, tree.children[0], tree.children[2])
+    "Seq(expression, Rep(Seq(Any('==', '!='), expression)))"
+    return left(tree.children[0], tree.children[1].children)
 
 def p_print_stmt(tree):
     "Seq('print', expression)"

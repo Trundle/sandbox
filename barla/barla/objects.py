@@ -8,6 +8,9 @@
 """
 
 
+from pypy.rlib.rarithmetic import ovfcheck
+
+
 class Object(object):
     """
         Base class for all objects.
@@ -56,21 +59,35 @@ class Int(Object):
         return Bool(self.intvalue != other.intvalue)
 
     def add(self, other):
-        return Int(self.intvalue + other.intvalue)
+        return Int(ovfcheck(self.intvalue + other.intvalue))
 
     def mul(self, other):
-        return Int(self.intvalue * other.intvalue)
+        return Int(ovfcheck(self.intvalue * other.intvalue))
 
     def sub(self, other):
-        return Int(self.intvalue - other.intvalue)
+        return Int(ovfcheck(self.intvalue - other.intvalue))
 
     def str(self):
         return str(self.intvalue)
+
+    def true(self):
+        return bool(self.intvalue)
 
 
 class Str(Object):
     def __init__(self, value):
         self.strvalue = value
+
+    def add(self, other):
+        if not isinstance(other, Str):
+            raise TypeError()
+        return Str(self.strvalue + other.strvalue)
+
+    def mul(self, other):
+        if not isinstance(other, Int):
+            raise TypeError()
+        string = [self.strvalue for _ in xrange(other.intvalue)]
+        return Str(''.join(string))
 
     def str(self):
         return self.strvalue

@@ -33,7 +33,7 @@ def compile(filename):
     if match:
         result.rest = result.rest[match.end():]
     if result.rest:
-        raise BarlaSyntaxError()
+        raise BarlaSyntaxError(result.rest)
 
     print 'Parse tree:'
     result.tree.dump()

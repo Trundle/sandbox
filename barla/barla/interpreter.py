@@ -35,10 +35,10 @@ def execute(code, with_jit=False):
         stmt = bytecode[pc]
         pc += 1
 
-        if stmt in [opcodes.ADD, opcodes.SUB, opcodes.EQ, opcodes.NE]:
+        if stmt in [opcodes.ADD, opcodes.MUL, opcodes.SUB, opcodes.EQ, opcodes.NE]:
             rhs = stack.pop()
             lhs = stack.pop()
-            
+
             if stmt == opcodes.ADD:
                 stack.append(lhs.add(rhs))
             elif stmt == opcodes.MUL:

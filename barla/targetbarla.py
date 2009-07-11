@@ -17,8 +17,8 @@ def entry_point(args):
     # viewcode.py to know the executable whose symbols it should display)
     highleveljitinfo.sys_executable = args[0]
 
-    if len(args) < 2:
-        print 'Usage: %s <filename> [--jit]' % (args[0], )
+    if len(args) != 2:
+        print 'Usage: %s <filename>' % (args[0], )
         return 1
 
     code = compile(args[1])
