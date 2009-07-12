@@ -9,6 +9,7 @@
 
 
 from pypy.rlib.rarithmetic import ovfcheck
+from pypy.rlib.rbigint import rbigint
 
 
 class Object(object):
@@ -36,6 +37,12 @@ class Object(object):
     def str(self):
         return '<Object>'
 
+    def int(self):
+        raise TypeError()
+
+    def long(self):
+        return Long(intvalue=self.int().intvalue)
+
     def true(self):
         return True
 
@@ -48,6 +55,46 @@ class Bool(Object):
         return self.boolvalue
 
 
+class Long(Object):
+    def __init__(self, intvalue=0, longvalue=None):
+        if longvalue is not None:
+            self.longvalue = longvalue
+        else:
+            self.longvalue = rbigint.fromint(intvalue)
+
+    def add(self, other):
+        return Long(longvalue=self.longvalue.add(other.long().longvalue))
+
+    def mul(self, other):
+        return Long(longvalue=self.longvalue.mul(other.long().longvalue))
+
+    def sub(self, other):
+        return Long(longvalue=self.longvalue.sub(other.long().longvalue))
+
+    def int(self):
+        raise OverflowError()
+
+    def long(self):
+        return self
+
+    def str(self):
+        return self.longvalue.str()
+
+    def true(self):
+        return self.longvalue.tobool()
+
+
+def to_long_on_overflow(method):
+    long_method = getattr(Long, method.__name__)
+
+    def wrapper(self, other):
+        try:
+            return method(self, other)
+        except OverflowError:
+            return long_method(self.long(), other)
+    return wrapper
+
+
 class Int(Object):
     def __init__(self, value):
         self.intvalue = value
@@ -58,17 +105,26 @@ class Int(Object):
     def ne(self, other):
         return Bool(self.intvalue != other.intvalue)
 
+    @to_long_on_overflow
     def add(self, other):
-        return Int(ovfcheck(self.intvalue + other.intvalue))
+        return Int(ovfcheck(self.intvalue + other.int().intvalue))
 
+    @to_long_on_overflow
     def mul(self, other):
-        return Int(ovfcheck(self.intvalue * other.intvalue))
+        return Int(ovfcheck(self.intvalue * other.int().intvalue))
 
+    @to_long_on_overflow
     def sub(self, other):
-        return Int(ovfcheck(self.intvalue - other.intvalue))
+        return Int(ovfcheck(self.intvalue - other.int().intvalue))
 
     def str(self):
         return str(self.intvalue)
+
+    def int(self):
+        return self
+
+    def long(self):
+        return Long(intvalue=self.intvalue)
 
     def true(self):
         return bool(self.intvalue)
