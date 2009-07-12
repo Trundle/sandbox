@@ -74,12 +74,12 @@ def execute(code, with_jit=False):
         elif stmt == opcodes.LOAD_NAME:
             index = ord(bytecode[pc])
             pc += 1
-            stack.append(frame.locals[consts[index].str()])
+            stack.append(frame.locals[consts[index].str().strvalue])
         elif stmt == opcodes.STORE_NAME:
             index = ord(bytecode[pc])
             pc += 1
-            frame.locals[consts[index].str()] = stack.pop()
+            frame.locals[consts[index].str().strvalue] = stack.pop()
         elif stmt == opcodes.PRINT:
-            print stack.pop().str()
+            print stack.pop().str().strvalue
         else:
             raise RuntimeError('Unknown opcode: ' + str(ord(stmt)))

@@ -35,7 +35,7 @@ class Object(object):
         raise TypeError()
 
     def str(self):
-        return '<Object>'
+        return Str('<Object>')
 
     def int(self):
         raise TypeError()
@@ -78,7 +78,7 @@ class Long(Object):
         return self
 
     def str(self):
-        return self.longvalue.str()
+        return Str(self.longvalue.str())
 
     def true(self):
         return self.longvalue.tobool()
@@ -118,7 +118,7 @@ class Int(Object):
         return Int(ovfcheck(self.intvalue - other.int().intvalue))
 
     def str(self):
-        return str(self.intvalue)
+        return Str(str(self.intvalue))
 
     def int(self):
         return self
@@ -146,7 +146,7 @@ class Str(Object):
         return Str(''.join(string))
 
     def str(self):
-        return self.strvalue
+        return self
 
     def true(self):
         return bool(self.strvalue)
