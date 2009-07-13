@@ -1,0 +1,8 @@
+print 'A more ore less useful example, showing most language features'
+print '-' * 80
+
+i := 10000
+while i
+    if i == 42 print i end
+    i := i - 1
+end

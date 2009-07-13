@@ -1,0 +1,10 @@
+a := 100
+b := 20
+c := 0
+
+while b
+    c := c + a
+    b := b - 1
+end
+
+print c
