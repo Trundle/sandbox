@@ -238,12 +238,12 @@ def p_assign_stmt(tree):
     return Assign(tree.children[0].name, tree.children[2])
 
 def p_if_stmt(tree):
-    "Seq('if', condition, statements, 'end')"
-    return If(tree.children[1], tree.children[2].children)
+    "Seq('if', condition, ':', statements, '.')"
+    return If(tree.children[1], tree.children[3].children)
 
 def p_while_stmt(tree):
-    "Seq('while', condition, statements, 'end')"
-    return While(tree.children[1], tree.children[2].children)
+    "Seq('while', condition, ':', statements, '.')"
+    return While(tree.children[1], tree.children[3].children)
 
 def p_condition(tree):
     "Seq(expression, Rep(Seq(Any('==', '!='), expression)))"
