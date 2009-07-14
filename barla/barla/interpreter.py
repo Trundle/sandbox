@@ -11,6 +11,7 @@
 from pypy.rlib.jit import JitDriver
 
 from barla import opcodes
+from barla.builtins import builtins
 
 
 jitdriver = JitDriver(greens=['code', 'pc'], reds=['frame', 'consts', 'stack'])
@@ -74,11 +75,24 @@ def execute(code, with_jit=False):
         elif stmt == opcodes.LOAD_NAME:
             index = ord(bytecode[pc])
             pc += 1
-            stack.append(frame.locals[consts[index].str().strvalue])
+            # First, search the name in frame locals
+            name = consts[index].str().strvalue
+            try:
+                obj = frame.locals[name]
+            except KeyError:
+                # Then search in builtins
+                obj = builtins[name]
+            stack.append(obj)
         elif stmt == opcodes.STORE_NAME:
             index = ord(bytecode[pc])
             pc += 1
             frame.locals[consts[index].str().strvalue] = stack.pop()
+        elif stmt == opcodes.CALL:
+            func = stack.pop()
+            n_args = ord(bytecode[pc])
+            pc += 1
+            args = [stack.pop() for _ in xrange(n_args)]
+            stack.append(func.call(args))
         elif stmt == opcodes.PRINT:
             print stack.pop().str().strvalue
         else:

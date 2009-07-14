@@ -1,5 +1,6 @@
 print 'A more ore less useful example, showing most language features'
 print '-' * 80
+print str(42)
 
 i := 10000
 while i:

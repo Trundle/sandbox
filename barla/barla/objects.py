@@ -31,8 +31,8 @@ class Object(object):
     def sub(self, other):
         raise TypeError()
 
-    def call(self):
-        raise TypeError()
+    def call(self, args):
+        raise TypeError('not callable')
 
     def str(self):
         return Str('<Object>')
@@ -53,6 +53,14 @@ class Bool(Object):
 
     def true(self):
         return self.boolvalue
+
+
+class BuiltinFunction(Object):
+    def __init__(self, func):
+        self.func = func
+
+    def call(self, args):
+        return self.func(args)
 
 
 class Long(Object):

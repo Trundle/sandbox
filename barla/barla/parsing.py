@@ -230,7 +230,24 @@ def p_expression(tree):
     return left(tree.children[0], tree.children[1].children)
 
 def p_term(tree):
-    "Any(number, name, string)"
+    "Seq(Any(number, name, string), Rep(call))"
+    term = tree.children[0]
+    if tree.children[1].children:
+        for arglist in tree.children[1].children:
+            term = Call(term, arglist.children)
+    return term
+
+def p_call(tree):
+    "Seq('(', Opt(arglist), ')')"
+    return tree.children[1]
+
+def p_arglist(tree):
+    "Seq(Rep(Seq(expression, ',')), expression)"
+    arguments = [child.children[0] for child in
+                 tree.children[0].children]
+    arguments.append(tree.children[1])
+    tree = ASTNode()
+    tree.children = arguments
     return tree
 
 def p_name(tree):
@@ -324,6 +341,26 @@ class BinaryOp(ASTNode):
         print ' ' * indent + str(self), self.op
         self.left.dump(indent + 4)
         self.right.dump(indent + 4)
+
+class Call(ASTNode):
+    def __init__(self, expr, arguments):
+        self.expr = expr
+        self.arguments = arguments
+
+    def compile(self, code, consts):
+        arguments = list(self.arguments)
+        arguments.reverse()
+        for arg in arguments:
+            arg.compile(code, consts)
+        self.expr.compile(code, consts)
+        code.append(opcodes.CALL)
+        code.append(chr(len(self.arguments)))
+
+    def dump(self, indent=0):
+        print ' ' * indent + str(self)
+        self.expr.dump(indent + 4)
+        for arg in self.arguments:
+            arg.dump(indent + 4)
 
 class Const(ASTNode):
     """
