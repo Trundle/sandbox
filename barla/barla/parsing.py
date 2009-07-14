@@ -150,9 +150,24 @@ class Any(Parser):
                 return match
         return None
 
+class Opt(Parser):
+    """
+        Optionally match a given parser. This parser never fails.
+    """
+    def __init__(self, parser, *args, **kwargs):
+        """NOT_RPYTHON"""
+        super(Opt, self).__init__(*args, **kwargs)
+        self.parser = parser
+
+    def match(self, string):
+        match = self.parser.match(string)
+        if match is not None:
+            return match
+        return Result(ASTNode(), string)
+
 class Rep(Parser):
     """
-        Match `parser` as often as possible.
+        Match `parser` as often as possible. This parser never fails.
     """
     def __init__(self, parser, *args, **kwargs):
         """NOT_RPYTHON"""
