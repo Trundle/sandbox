@@ -9,17 +9,14 @@
 
 from pypy.rlib.streamio import open_file_as_stream
 
-from barla.interpreter import execute
+from barla.interpreter import Interpreter
+from barla.objects import Code
 from barla.parsing import RePattern, statements
 
 
 class BarlaSyntaxError(Exception):
     pass
 
-class Code(object):
-    def __init__(self, code, consts):
-        self.code = code
-        self.consts = consts
 
 whitespaces = RePattern('\s*')
 def compile(filename):

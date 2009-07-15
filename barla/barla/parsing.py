@@ -7,7 +7,8 @@ from pypy.rlib.rsre import rsre, rsre_char, rsre_core
 from pypy.module.unicodedata import unicodedb_5_0_0 as unicodedb
 
 from barla import opcodes
-from barla.objects import Int, Str
+from barla.builtins import b_None
+from barla.objects import Code, Int, Str
 
 rsre.set_unicode_db(unicodedb)
 
@@ -260,6 +261,15 @@ def p_number(tree):
     value = int(tree.word)
     return Const(Int(value))
 
+def p_paramlist(tree):
+    "Seq(Rep(Seq(name, ',')), name)"
+    params = [child.children[0] for child in
+                 tree.children[0].children]
+    params.append(tree.children[1])
+    tree = ASTNode()
+    tree.children = params
+    return tree
+
 def p_string(tree):
     r"""Word(r"'[^\n]*?'")"""
     value = tree.word[1:]
@@ -268,6 +278,13 @@ def p_string(tree):
 def p_assign_stmt(tree):
     "Seq(name, ':=', expression)"
     return Assign(tree.children[0].name, tree.children[2])
+
+def p_funcdef(tree):
+    "Seq(name, '(', Opt(paramlist), ')', ':', statements, '.')"
+    name = tree.children[0].name
+    params = [child.name for child in tree.children[2].children]
+    body = tree.children[5].children
+    return FunctionDef(name, params, body)
 
 def p_if_stmt(tree):
     "Seq('if', condition, ':', statements, '.')"
@@ -285,8 +302,13 @@ def p_print_stmt(tree):
     "Seq('print', expression)"
     return Print(tree.children[1])
 
+def p_return_stmt(tree):
+    "Seq('return', expression)"
+    return Return(tree.children[1])
+
 def p_statements(tree):
-    "Rep(Any(assign_stmt, if_stmt, print_stmt, while_stmt))"
+    """Rep(Any(assign_stmt, funcdef, if_stmt, print_stmt, return_stmt,
+               while_stmt))"""
     return tree
 
 
@@ -382,6 +404,46 @@ class Const(ASTNode):
     def dump(self, indent=0):
         print ' ' * indent + str(self), self.constvalue.str()
 
+class FunctionDef(ASTNode):
+    def __init__(self, name, params, body):
+        self.name = name
+        self.params = params
+        self.body = body
+
+    def compile(self, code, consts):
+        # Compile function code
+        fcode = []
+        fconsts = []
+        params = list(self.params)
+        params.reverse()
+        # Pop parameters from stack to names in the new function
+        for name in params:
+            fcode.append(opcodes.STORE_NAME)
+            fcode.append(chr(len(fconsts)))
+            fconsts.append(Str(name))
+        # Compile the new function's code
+        for stmt in self.body:
+            stmt.compile(fcode, fconsts)
+        # Default return value
+        fcode.append(opcodes.LOAD_CONST)
+        fcode.append(chr(len(fconsts)))
+        fconsts.append(b_None)
+        fcode.append(opcodes.RETURN)
+        # Add creation code
+        codeobj = Code(''.join(fcode), fconsts)
+        code.append(opcodes.MAKE_FUNCTION)
+        code.append(chr(len(consts)))
+        consts.append(codeobj)
+        code.append(opcodes.STORE_NAME)
+        code.append(chr(len(consts)))
+        consts.append(Str(self.name))
+
+    def dump(self, indent=0):
+        print ' ' * indent + str(self) + '%s(%s)' % (self.name,
+                                                     ', '.join(self.params))
+        for stmt in self.body:
+            stmt.dump(indent + 4)
+
 class If(ASTNode):
     def __init__(self, condition, body):
         ASTNode.__init__(self)
@@ -432,6 +494,19 @@ class Print(ASTNode):
     def compile(self, code, consts):
         self.expr.compile(code, consts)
         code.append(opcodes.PRINT)
+
+    def dump(self, indent=0):
+        print ' ' * indent + str(self)
+        self.expr.dump(indent + 4)
+
+class Return(ASTNode):
+    def __init__(self, expr):
+        ASTNode.__init__(self)
+        self.expr = expr
+
+    def compile(self, code, consts):
+        self.expr.compile(code, consts)
+        code.append(opcodes.RETURN)
 
     def dump(self, indent=0):
         print ' ' * indent + str(self)

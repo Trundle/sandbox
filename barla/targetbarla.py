@@ -5,7 +5,7 @@ import time
 from pypy.jit.backend.hlinfo import highleveljitinfo
 from pypy.jit.metainterp.policy import JitPolicy
 
-from barla import compile, execute
+from barla import Interpreter, compile
 
 
 def entry_point(args):
@@ -22,19 +22,20 @@ def entry_point(args):
         return 1
 
     code = compile(args[1])
+    interpreter = Interpreter()
 
     start = time.clock()
-    execute(code, False)
+    interpreter.execute(code, False)
     stop = time.clock()
     print 'Non jitted: %f seconds' % (stop - start, )
 
     start = time.clock()
-    execute(code, True)
+    interpreter.execute(code, True)
     stop = time.clock()
     print 'Warmup jitted: %f seconds' % (stop - start, )
 
     start = time.clock()
-    execute(code, True)
+    interpreter.execute(code, True)
     stop = time.clock()
     print 'Warmed jitted: %f seconds' % (stop - start, )
 

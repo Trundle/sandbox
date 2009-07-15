@@ -7,7 +7,6 @@
     Barla's object model.
 """
 
-
 from pypy.rlib.rarithmetic import ovfcheck
 from pypy.rlib.rbigint import rbigint
 
@@ -31,7 +30,7 @@ class Object(object):
     def sub(self, other):
         raise TypeError()
 
-    def call(self, args):
+    def call(self, interpreter, args):
         raise TypeError('not callable')
 
     def str(self):
@@ -59,9 +58,20 @@ class BuiltinFunction(Object):
     def __init__(self, func):
         self.func = func
 
-    def call(self, args):
+    def call(self, interpreter, args):
         return self.func(args)
 
+
+class Function(Object):
+    def __init__(self, code):
+        self.func_code = code
+
+    def call(self, interpreter, args):
+        interpreter.stack.extend(args)
+        return interpreter.execute(self.func_code)
+
+    def str(self):
+        return Str('<Function>')
 
 class Long(Object):
     def __init__(self, intvalue=0, longvalue=None):
@@ -138,6 +148,14 @@ class Int(Object):
         return bool(self.intvalue)
 
 
+class None_(Object):
+    def str(self):
+        return Str('None')
+
+    def true(self):
+        return False
+
+
 class Str(Object):
     def __init__(self, value):
         self.strvalue = value
@@ -158,3 +176,11 @@ class Str(Object):
 
     def true(self):
         return bool(self.strvalue)
+
+
+# Internal objects
+
+class Code(Object):
+    def __init__(self, code, consts):
+        self.code = code
+        self.consts = consts

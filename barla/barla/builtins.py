@@ -7,7 +7,7 @@
     Builtin functions of barla.
 """
 
-from barla.objects import BuiltinFunction, Int
+from barla.objects import BuiltinFunction, Int, None_
 
 
 builtins = {}
@@ -19,3 +19,7 @@ def b_str(args):
         raise TypeError('too much arguments')
     return args[0].str()
 builtins['str'] = b_str
+
+
+b_None = None_()
+builtins['None'] = b_None
