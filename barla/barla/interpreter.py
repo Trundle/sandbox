@@ -76,12 +76,12 @@ class Interpreter(object):
                 pc = target
                 continue
             elif stmt == opcodes.JUMP_IF_FALSE:
-                if not stack.pop().true():
+                if not stack.pop().true().boolvalue:
                     pc += ord(bytecode[pc])
                     continue
                 pc += 1
             elif stmt == opcodes.JUMP_IF_TRUE:
-                if stack.pop().true():
+                if stack.pop().true().boolvalue:
                     pc += ord(bytecode[pc])
                     continue
                 pc += 1

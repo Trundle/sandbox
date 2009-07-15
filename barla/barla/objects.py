@@ -43,15 +43,18 @@ class Object(object):
         return Long(intvalue=self.int().intvalue)
 
     def true(self):
-        return True
+        return Bool(True)
 
 
 class Bool(Object):
     def __init__(self, value):
         self.boolvalue = value
 
+    def str(self):
+        return Str(str(self.boolvalue))
+
     def true(self):
-        return self.boolvalue
+        return self
 
 
 class BuiltinFunction(Object):
@@ -99,7 +102,7 @@ class Long(Object):
         return Str(self.longvalue.str())
 
     def true(self):
-        return self.longvalue.tobool()
+        return Bool(self.longvalue.tobool())
 
 
 def to_long_on_overflow(method):
@@ -145,7 +148,7 @@ class Int(Object):
         return Long(intvalue=self.intvalue)
 
     def true(self):
-        return bool(self.intvalue)
+        return Bool(bool(self.intvalue))
 
 
 class None_(Object):
@@ -153,7 +156,7 @@ class None_(Object):
         return Str('None')
 
     def true(self):
-        return False
+        return Bool(False)
 
 
 class Str(Object):
@@ -175,7 +178,7 @@ class Str(Object):
         return self
 
     def true(self):
-        return bool(self.strvalue)
+        return Bool(bool(self.strvalue))
 
 
 # Internal objects
