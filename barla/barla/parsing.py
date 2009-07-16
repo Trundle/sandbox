@@ -295,7 +295,8 @@ def p_while_stmt(tree):
     return While(tree.children[1], tree.children[3].children)
 
 def p_condition(tree):
-    "Seq(expression, Rep(Seq(Any('==', '!='), expression)))"
+    """Seq(expression, Rep(Seq(Any('==', '!=', '<=', '<', '>=', '>'),
+                               expression)))"""
     return left(tree.children[0], tree.children[1].children)
 
 def p_print_stmt(tree):
@@ -346,7 +347,11 @@ class BinaryOp(ASTNode):
         '-': opcodes.SUB,
         '*': opcodes.MUL,
         '==': opcodes.EQ,
-        '!=': opcodes.NE
+        '!=': opcodes.NE,
+        '<': opcodes.LT,
+        '<=': opcodes.LE,
+        '>': opcodes.GT,
+        '>=': opcodes.GE
     }
     def __init__(self, op, left, right):
         ASTNode.__init__(self)

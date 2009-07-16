@@ -11,6 +11,20 @@ from pypy.rlib.rarithmetic import ovfcheck
 from pypy.rlib.rbigint import rbigint
 
 
+def generic_on(exc_type):
+    """NOT_RPYTHON"""
+    def decorator(method):
+        generic_method = getattr(Object, method.__name__)
+
+        def wrapper(self, other):
+            try:
+                return method(self, other)
+            except exc_type:
+                return generic_method(self.long(), other)
+        return wrapper
+    return decorator
+
+
 class Object(object):
     """
         Base class for all objects.
@@ -20,6 +34,18 @@ class Object(object):
 
     def ne(self, other):
         return Bool(self != other)
+
+    def le(self, other):
+        return Bool(not self.gt(other).boolvalue)
+
+    def lt(self, other):
+        return Bool(self.eq(other).boolvalue or self.le(other).boolvalue)
+
+    def ge(self, other):
+        return Bool(self.eq(other).boolvalue or not self.lt(other).boolvalue)
+
+    def gt(self, other):
+        return Bool(not(self.eq(other).boolvalue or self.lt(other).boolvalue))
 
     def add(self, other):
         raise TypeError()
@@ -83,6 +109,20 @@ class Long(Object):
         else:
             self.longvalue = rbigint.fromint(intvalue)
 
+    @generic_on(TypeError)
+    def eq(self, other):
+        return Bool(self.longvalue == other.long().longvalue)
+
+    @generic_on(TypeError)
+    def ne(self, other):
+        return Bool(self.longvalue != other.long().longvalue)
+
+    def ge(self, other):
+        return self.lt(other)
+
+    def lt(self, other):
+        return Bool(self.longvalue.lt(other.long().longvalue))
+
     def add(self, other):
         return Long(longvalue=self.longvalue.add(other.long().longvalue))
 
@@ -106,6 +146,7 @@ class Long(Object):
 
 
 def to_long_on_overflow(method):
+    """NOT_RPYTHON"""
     long_method = getattr(Long, method.__name__)
 
     def wrapper(self, other):
@@ -120,11 +161,16 @@ class Int(Object):
     def __init__(self, value):
         self.intvalue = value
 
+    @generic_on(TypeError)
     def eq(self, other):
-        return Bool(self.intvalue == other.intvalue)
+        return Bool(self.intvalue == other.int().intvalue)
 
+    @generic_on(TypeError)
     def ne(self, other):
-        return Bool(self.intvalue != other.intvalue)
+        return Bool(self.intvalue != other.int().intvalue)
+
+    def lt(self, other):
+        return Bool(self.intvalue < other.int().intvalue)
 
     @to_long_on_overflow
     def add(self, other):

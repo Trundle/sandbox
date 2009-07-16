@@ -53,7 +53,8 @@ class Interpreter(object):
             pc += 1
 
             if stmt in [opcodes.ADD, opcodes.MUL, opcodes.SUB, opcodes.EQ,
-                        opcodes.NE]:
+                        opcodes.NE, opcodes.LT, opcodes.LE, opcodes.GT,
+                        opcodes.GE]:
                 rhs = stack.pop()
                 lhs = stack.pop()
 
@@ -67,6 +68,14 @@ class Interpreter(object):
                     stack.append(lhs.eq(rhs))
                 elif stmt == opcodes.NE:
                     stack.append(lhs.ne(rhs))
+                elif stmt == opcodes.LT:
+                    stack.append(lhs.lt(rhs))
+                elif stmt == opcodes.LE:
+                    stack.append(lhs.le(rhs))
+                elif stmt == opcodes.GT:
+                    stack.append(lhs.gt(rhs))
+                elif stmt == opcodes.GE:
+                    stack.append(lhs.ge(rhs))
             elif stmt == opcodes.JUMP_ABSOLUTE:
                 target = ord(bytecode[pc])
                 if with_jit and target < pc:
