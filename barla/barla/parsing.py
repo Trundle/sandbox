@@ -290,6 +290,11 @@ def p_if_stmt(tree):
     "Seq('if', condition, ':', statements, '.')"
     return If(tree.children[1], tree.children[3].children)
 
+def p_if_else_stmt(tree):
+    "Seq('if', condition, ':', statements, '.', 'else', ':', statements, '.')"
+    return IfElse(tree.children[1], tree.children[3].children,
+                  tree.children[7].children)
+
 def p_while_stmt(tree):
     "Seq('while', condition, ':', statements, '.')"
     return While(tree.children[1], tree.children[3].children)
@@ -308,8 +313,8 @@ def p_return_stmt(tree):
     return Return(tree.children[1])
 
 def p_statements(tree):
-    """Rep(Any(assign_stmt, funcdef, if_stmt, print_stmt, return_stmt,
-               while_stmt))"""
+    """Rep(Any(assign_stmt, funcdef, if_else_stmt, if_stmt, print_stmt,
+               return_stmt, while_stmt))"""
     return tree
 
 
@@ -407,7 +412,7 @@ class Const(ASTNode):
         code.append(chr(index))
 
     def dump(self, indent=0):
-        print ' ' * indent + str(self), self.constvalue.str()
+        print ' ' * indent + str(self), self.constvalue.str().strvalue
 
 class FunctionDef(ASTNode):
     def __init__(self, name, params, body):
@@ -472,6 +477,45 @@ class If(ASTNode):
         self.condition.dump(indent + 4)
         for stmt in self.body:
             stmt.dump(indent + 4)
+
+class IfElse(ASTNode):
+    def __init__(self, condition, body, else_body):
+        ASTNode.__init__(self)
+        self.condition = condition
+        self.body = body
+        self.else_body = else_body
+
+    def compile(self, code, consts):
+        self.condition.compile(code, consts)
+        code.append(opcodes.JUMP_IF_FALSE)
+        jump_offset_pos = len(code)
+        # Placeholder
+        code.append(chr(0xff))
+
+        for stmt in self.body:
+            stmt.compile(code, consts)
+        code.append(opcodes.JUMP_ABSOLUTE)
+        end_if_jump_offset_pos = len(code)
+        # Placeholder
+        code.append(chr(0xff))
+
+        code[jump_offset_pos] = chr(len(code) - jump_offset_pos)
+
+        for stmt in self.else_body:
+            stmt.compile(code, consts)
+
+        code[end_if_jump_offset_pos] = chr(len(code))
+
+    def dump(self, indent=0):
+        print ' ' * indent + str(self)
+        self.condition.dump(indent + 4)
+        print ' ' * (indent + 1) + 'body:'
+        for stmt in self.body:
+            stmt.dump(indent + 8)
+        print ' ' * (indent + 1) + 'else body:'
+        for stmt in self.else_body:
+            stmt.dump(indent + 8)
+
 
 class Name(ASTNode):
     def __init__(self, name):
