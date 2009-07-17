@@ -20,11 +20,12 @@ jitdriver = JitDriver(greens=['code', 'pc'], reds=['frame', 'consts',
 
 
 class Frame(object):
-    def __init__(self, code, prev=None):
+    def __init__(self, code, prev=None, jitted=False):
         self.code = code
         self.locals = {}
         self.next = None
         self.prev = prev
+        self.jitted = jitted
 
 
 class Interpreter(object):
@@ -34,7 +35,7 @@ class Interpreter(object):
 
     def execute(self, code, with_jit=False):
         # Setup new frame
-        self.frame, oldframe = Frame(code, self.frame), self.frame
+        self.frame, oldframe = Frame(code, self.frame, with_jit), self.frame
         if oldframe is not None:
             oldframe.next = self.frame
         # Prepare dispatch loop

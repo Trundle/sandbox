@@ -1,0 +1,10 @@
+pow(x, y):
+    a := 1
+    while y:
+        a := a * x
+        y := y - 1
+    .
+    return a
+.
+
+print pow(2, 2000)

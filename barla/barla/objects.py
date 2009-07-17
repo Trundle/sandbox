@@ -97,7 +97,8 @@ class Function(Object):
 
     def call(self, interpreter, args):
         interpreter.stack.extend(args)
-        return interpreter.execute(self.func_code)
+        return interpreter.execute(self.func_code,
+                                   interpreter.frame.jitted)
 
     def str(self):
         return Str('<Function>')
