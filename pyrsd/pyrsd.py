@@ -43,7 +43,7 @@ def download(url, outdir):
         dl_url = form.get('action')
     with closing(urlopen(dl_url, 'dl.start=Free')) as connection:
         data = connection.read()
-        pd = re.search('about (\d+) minute', data)
+        pd = re.search('(\d+) minute', data)
         if pd is not None:
             minwait = int(pd.group(1))
             starttime = (datetime.now() + timedelta(minutes=minwait))
