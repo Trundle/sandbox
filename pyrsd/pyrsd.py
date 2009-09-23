@@ -10,15 +10,15 @@ import traceback
 
 from binascii import unhexlify
 from base64 import b64decode
+from ConfigParser import ConfigParser
 from contextlib import closing
+from Crypto.Cipher import AES
 from datetime import datetime, timedelta
-from os.path import basename, curdir, exists, join as pjoin
+from lxml import etree, html
+from os.path import basename, curdir, exists, expanduser, join as pjoin
 from tempfile import TemporaryFile
 from time import sleep, time as ttime
 from urllib2 import URLError, build_opener, install_opener, urlopen
-
-from Crypto.Cipher import AES
-from lxml import html
 
 
 USER_AGENT = ('Mozilla/5.0 (compatible; Konqueror/4.0; Linux) '
@@ -116,11 +116,45 @@ def decode_rsdf(filename):
 
     return urls
 
+def decode_dlc(filename, key, iv, url):
+    # extract data from the dlc file
+    with open(filename) as dlc_file:
+        data = dlc_file.read()
+        dlcid = data[-88:]
+        data = b64decode(data[:-88])
+
+    # we need to get the key from the server
+    with closing(urlopen(url + dlcid)) as connection:
+        cdata = connection.read()
+        aes = AES.new(key, AES.MODE_CBC, iv)
+        k = re.search('<rc>(.+)</rc>', cdata).group(1)
+        rkey = aes.decrypt(b64decode(k))
+
+    # decrypt data
+    aes = AES.new(rkey, AES.MODE_CBC, rkey)
+    rdata = b64decode(aes.decrypt(data))
+    xml = etree.fromstring(rdata)
+
+    urls = []
+    for u in xml.xpath('content/package/file/url'):
+        urls.append(b64decode(u.text))
+    return urls
+
 
 def main(args=sys.argv[1:]):
+    config = ConfigParser()
+    config.read(expanduser('~/.pyrsdrc'))
+
     outdir = args[0]
     if (len(args) == 2):
-        urls = decode_rsdf(args[1])
+        filename = args[1]
+        if filename.endswith('rsdf'):
+            urls = decode_rsdf(filename)
+        elif filename.endswith('dlc'):
+            key = config.get('DLCDecrypter', 'key')
+            iv = config.get('DLCDecrypter', 'iv')
+            url = config.get('DLCDecrypter', 'url')
+            urls = decode_dlc(filename, key, iv, url)
     else:
         # Get list of URLs from stdin
         if sys.stdin.isatty():
