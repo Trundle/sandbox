@@ -168,7 +168,7 @@ def main(args=sys.argv[1:]):
 
     for url in urls:
         url = url.strip()
-        if not url:
+        if not url or url.startswith('#'):
             continue
         print 'Downloading %s ...' % (url, )
         sys.stdout.flush()
