@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+    pyrsd
+    ~~~~~
+    A simple Rapidshare downloader that supports RSDF and DLC files.
+
+    :copyright: Copyright 2008-2009 by Andreas Stührk and Sebastian Ramacher.
+    :license: Modified BSD.
+"""
+
 from __future__ import division, with_statement
 
 import re
