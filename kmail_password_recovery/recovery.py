@@ -25,7 +25,8 @@ def main(args=sys.argv[1:]):
     config = ConfigParser()
     config.read(args[0])
     for section in config.sections():
-        if not section.startswith('Transport '):
+        if not (section.startswith('Transport ') or
+                section.startswith('Account ')):
             continue
         name = config.get(section, 'name')
         try:
@@ -33,7 +34,7 @@ def main(args=sys.argv[1:]):
         except NoOptionError:
             pwd = str()
         print '%s:%s' % (name, pwd)
-    
+
     return 0
 
 
