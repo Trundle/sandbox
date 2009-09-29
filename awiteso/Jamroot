@@ -1,0 +1,17 @@
+import boost ;
+boost.use-project ;
+
+lib png : : <name>png <link>shared ;
+
+project
+  : requirements
+  <toolset>gcc:<cxxflags>-ftemplate-depth-300
+  # use this version with a recent version
+  # <toolset>gcc:<c++-template-depth>300
+  <library>/boost//program_options
+  <library>png
+  ;
+
+exe awiteso : [ glob *.cpp ] ;
+
+install . : awiteso ;
