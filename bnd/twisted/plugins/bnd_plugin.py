@@ -33,10 +33,12 @@ class BNDMaker(object):
 
         bot = service.MultiService()
         xmlrpcinterface = bnd.XMLRPCInterface(bot, login_checker)
-        rpc = internet.TCPServer(options['port'], server.Site(xmlrpcinterface))
+        rpc = internet.TCPServer(int(options['port']),
+                                 server.Site(xmlrpcinterface))
         rpc.setName('XML-RPC')
         rpc.setServiceParent(bot)
-        ircbot = internet.TCPClient(options['server'], options['ircport'],
+        ircbot = internet.TCPClient(options['server'],
+                                    int(options['ircport']),
                                     bnd.BNDFactory(xmlrpcinterface,
                                     options['channel'], options['nick']))
         ircbot.setName('IRC')
