@@ -61,6 +61,12 @@ def download(url, outdir):
                 (minwait, starttime.strftime("%x %X"))
             sleep(minwait * 60)
             return download(url, outdir)
+        if 'no more download slots' in data:
+            starttime = datetime.now() + timedelta(minutes=15)
+            print "\t... no more download slots available - waiting 15 " \
+                "minutes (starting at %s) ..." % starttime.strftime("%x %X")
+            sleep(15 * 60)
+            return download(url, outdir)
 
         timeout = int(re.search('var c=(\d+);', data).group(1))
         dl_url = re.search('<form name="dlf" action="(.*?)" ', data).group(1)
