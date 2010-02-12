@@ -61,7 +61,9 @@ def download(url, outdir):
                 (minwait, starttime.strftime("%x %X"))
             sleep(minwait * 60)
             return download(url, outdir)
-        if 'no more download slots' in data:
+        if re.search(r"(Currently a lot of users|There are no more download " \
+            "slots|Unfortunately right now our servers are overloaded)",
+            data, re.I) is not None:
             starttime = datetime.now() + timedelta(minutes=15)
             print "\t... no more download slots available - waiting 15 " \
                 "minutes (starting at %s) ..." % starttime.strftime("%x %X")
