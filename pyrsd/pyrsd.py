@@ -6,7 +6,7 @@
     ~~~~~
     A simple Rapidshare downloader that supports RSDF and DLC files.
 
-    :copyright: Copyright 2008-2009 by Andreas Stührk and Sebastian Ramacher.
+    :copyright: Copyright 2008-2010 by Andreas Stührk and Sebastian Ramacher.
     :license: Modified BSD.
 """
 
