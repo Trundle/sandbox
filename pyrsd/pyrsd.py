@@ -64,10 +64,12 @@ def download(url, outdir):
         if re.search(r"(Currently a lot of users|There are no more download " \
             "slots|Unfortunately right now our servers are overloaded)",
             data, re.I) is not None:
-            starttime = datetime.now() + timedelta(minutes=15)
-            print "\t... no more download slots available - waiting 15 " \
-                "minutes (starting at %s) ..." % starttime.strftime("%x %X")
-            sleep(15 * 60)
+            minwait = 5
+            starttime = datetime.now() + timedelta(minutes=5)
+            print "\t... no more download slots available - waiting %d " \
+                "minutes (starting at %s) ..." % (minwait,
+                        starttime.strftime("%x %X"))
+            sleep(5 * 60)
             return download(url, outdir)
 
         timeout = int(re.search('var c=(\d+);', data).group(1))
