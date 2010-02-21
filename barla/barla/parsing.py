@@ -15,28 +15,12 @@ rsre.set_unicode_db(unicodedb)
 
 # A small regex implementation
 
-class StringState(rsre_core.StateMixin):
-    def __init__(self, string, start=0, end=-1):
-        self.string = string
-        if end < 0:
-            end = len(string)
-        self.start = start
-        self.end = end
-        self.flags = 0
-        self.reset()
-
-    def get_char_ord(self, pos):
-        return ord(self.string[pos])
-
-    def lower(self, char_ord):
-        return rsre_char.getlower(char_ord, self.flags)
-
 class RePattern(object):
     def __init__(self, pattern):
         self.code, self.groups = re_compile(pattern)
 
     def match(self, string):
-        state = StringState(string)
+        state = rsre.SimpleStringState(string)
         if state.match(self.code):
             return ReMatch(self, state)
 
@@ -331,8 +315,8 @@ class Assign(ASTNode):
         self.name = name
         self.expr = expr
 
-    def compile(self, code, consts):
-        self.expr.compile(code, consts)
+    def compile(self, code, consts, flags):
+        flags = self.expr.compile(code, consts, flags)
         name = Str(self.name)
         try:
             index = consts.index(name)
@@ -341,6 +325,7 @@ class Assign(ASTNode):
             consts.append(name)
         code.append(opcodes.STORE_NAME)
         code.append(chr(index))
+        return flags
 
     def dump(self, indent=0):
         print ' ' * indent + str(self), self.name
@@ -364,10 +349,11 @@ class BinaryOp(ASTNode):
         self.left = left
         self.right = right
 
-    def compile(self, code, consts):
-        self.left.compile(code, consts)
-        self.right.compile(code, consts)
+    def compile(self, code, consts, flags):
+        flags = self.left.compile(code, consts, flags)
+        flags = self.right.compile(code, consts, flags)
         code.append(self.ops[self.op])
+        return flags
 
     def dump(self, indent=0):
         print ' ' * indent + str(self), self.op
@@ -379,14 +365,15 @@ class Call(ASTNode):
         self.expr = expr
         self.arguments = arguments
 
-    def compile(self, code, consts):
+    def compile(self, code, consts, flags):
         arguments = list(self.arguments)
         arguments.reverse()
         for arg in arguments:
-            arg.compile(code, consts)
-        self.expr.compile(code, consts)
+            flags = arg.compile(code, consts, flags)
+        self.expr.compile(code, consts, flags)
         code.append(opcodes.CALL)
         code.append(chr(len(self.arguments)))
+        return flags
 
     def dump(self, indent=0):
         print ' ' * indent + str(self)
@@ -402,7 +389,7 @@ class Const(ASTNode):
         ASTNode.__init__(self)
         self.constvalue = value
 
-    def compile(self, code, consts):
+    def compile(self, code, consts, flags):
         try:
             index = consts.index(self.constvalue)
         except ValueError:
@@ -410,6 +397,7 @@ class Const(ASTNode):
             consts.append(self.constvalue)
         code.append(opcodes.LOAD_CONST)
         code.append(chr(index))
+        return flags
 
     def dump(self, indent=0):
         print ' ' * indent + str(self), self.constvalue.str().strvalue
@@ -420,10 +408,11 @@ class FunctionDef(ASTNode):
         self.params = params
         self.body = body
 
-    def compile(self, code, consts):
+    def compile(self, code, consts, flags):
         # Compile function code
         fcode = []
         fconsts = []
+        fflags = 0
         params = list(self.params)
         params.reverse()
         # Pop parameters from stack to names in the new function
@@ -433,20 +422,21 @@ class FunctionDef(ASTNode):
             fconsts.append(Str(name))
         # Compile the new function's code
         for stmt in self.body:
-            stmt.compile(fcode, fconsts)
+            fflags = stmt.compile(fcode, fconsts, fflags)
         # Default return value
         fcode.append(opcodes.LOAD_CONST)
         fcode.append(chr(len(fconsts)))
         fconsts.append(b_None)
         fcode.append(opcodes.RETURN)
         # Add creation code
-        codeobj = Code(''.join(fcode), fconsts)
+        codeobj = Code(''.join(fcode), fconsts, fflags)
         code.append(opcodes.MAKE_FUNCTION)
         code.append(chr(len(consts)))
         consts.append(codeobj)
         code.append(opcodes.STORE_NAME)
         code.append(chr(len(consts)))
         consts.append(Str(self.name))
+        return flags
 
     def dump(self, indent=0):
         print ' ' * indent + str(self) + '%s(%s)' % (self.name,
@@ -460,17 +450,18 @@ class If(ASTNode):
         self.condition = condition
         self.body = body
 
-    def compile(self, code, consts):
-        self.condition.compile(code, consts)
+    def compile(self, code, consts, flags):
+        flags = self.condition.compile(code, consts, flags)
         code.append(opcodes.JUMP_IF_FALSE)
         jump_offset_pos = len(code)
         # Placeholder
         code.append(chr(0xff))
 
         for stmt in self.body:
-            stmt.compile(code, consts)
+            flags = stmt.compile(code, consts, flags)
 
         code[jump_offset_pos] = chr(len(code) - jump_offset_pos)
+        return flags
 
     def dump(self, indent=0):
         print ' ' * indent + str(self)
@@ -485,16 +476,18 @@ class IfElse(ASTNode):
         self.body = body
         self.else_body = else_body
 
-    def compile(self, code, consts):
-        self.condition.compile(code, consts)
+    def compile(self, code, consts, flags):
+        flags = self.condition.compile(code, consts, flags)
         code.append(opcodes.JUMP_IF_FALSE)
         jump_offset_pos = len(code)
         # Placeholder
         code.append(chr(0xff))
 
         for stmt in self.body:
-            stmt.compile(code, consts)
+            flags = stmt.compile(code, consts, flags)
         code.append(opcodes.JUMP_ABSOLUTE)
+        # Add jump flag
+        flags |= 1
         end_if_jump_offset_pos = len(code)
         # Placeholder
         code.append(chr(0xff))
@@ -502,9 +495,10 @@ class IfElse(ASTNode):
         code[jump_offset_pos] = chr(len(code) - jump_offset_pos)
 
         for stmt in self.else_body:
-            stmt.compile(code, consts)
+            flags = stmt.compile(code, consts, flags)
 
         code[end_if_jump_offset_pos] = chr(len(code))
+        return flags
 
     def dump(self, indent=0):
         print ' ' * indent + str(self)
@@ -522,7 +516,7 @@ class Name(ASTNode):
         ASTNode.__init__(self)
         self.name = name
 
-    def compile(self, code, consts):
+    def compile(self, code, consts, flags):
         name = Str(self.name)
         try:
             index = consts.index(name)
@@ -531,6 +525,7 @@ class Name(ASTNode):
             consts.append(name)
         code.append(opcodes.LOAD_NAME)
         code.append(chr(index))
+        return flags
 
     def dump(self, indent=0):
         print ' ' * indent + str(self), self.name
@@ -540,9 +535,10 @@ class Print(ASTNode):
         ASTNode.__init__(self)
         self.expr = expr
 
-    def compile(self, code, consts):
-        self.expr.compile(code, consts)
+    def compile(self, code, consts, flags):
+        flags = self.expr.compile(code, consts, flags)
         code.append(opcodes.PRINT)
+        return flags
 
     def dump(self, indent=0):
         print ' ' * indent + str(self)
@@ -553,9 +549,10 @@ class Return(ASTNode):
         ASTNode.__init__(self)
         self.expr = expr
 
-    def compile(self, code, consts):
-        self.expr.compile(code, consts)
+    def compile(self, code, consts, flags):
+        flags = self.expr.compile(code, consts, flags)
         code.append(opcodes.RETURN)
+        return flags
 
     def dump(self, indent=0):
         print ' ' * indent + str(self)
@@ -567,20 +564,23 @@ class While(ASTNode):
         self.condition = condition
         self.body = body
 
-    def compile(self, code, consts):
+    def compile(self, code, consts, flags):
         loop_begin_pos = len(code)
-        self.condition.compile(code, consts)
+        flags = self.condition.compile(code, consts, flags)
         code.append(opcodes.JUMP_IF_FALSE)
         jump_offset_pos = len(code)
         # Placeholder
         code.append(chr(0xff))
 
         for stmt in self.body:
-            stmt.compile(code, consts)
+            flag = stmt.compile(code, consts, flags)
         code.append(opcodes.JUMP_ABSOLUTE)
         code.append(chr(loop_begin_pos))
+        # Add jump flag
+        flags |= 1
 
         code[jump_offset_pos] = chr(len(code) - jump_offset_pos)
+        return flags
 
     def dump(self, indent=0):
         print ' ' * indent + str(self)

@@ -15,8 +15,17 @@ from barla.builtins import builtins
 from barla.objects import Function
 
 
-jitdriver = JitDriver(greens=['code', 'pc'], reds=['frame', 'consts',
-                                                   'interpreter', 'stack'])
+def can_inline(code, counter):
+    """
+    This function gets called with the green args as arguments and
+    returns whether can_enter_jit will be hit or not.
+    """
+    return not code.flags
+
+jitdriver = JitDriver(can_inline=can_inline,
+                      greens=['code', 'pc'],
+                      reds=['frame', 'consts', 'interpreter', 'stack',
+                            'with_jit'])
 
 
 class Frame(object):
@@ -39,18 +48,18 @@ class Interpreter(object):
         if oldframe is not None:
             oldframe.next = self.frame
         # Prepare dispatch loop
-        bytecode = code.code
         consts = code.consts
         pc = 0
         frame = self.frame
         stack = self.stack
         # The dispatch loop of barla's VM
-        while pc < len(bytecode):
+        while pc < len(code.code):
             if with_jit:
-                jitdriver.jit_merge_point(code=bytecode, pc=pc,
+                jitdriver.jit_merge_point(code=code, pc=pc,
                                           consts=consts, frame=frame,
-                                          interpreter=self, stack=stack)
-            stmt = bytecode[pc]
+                                          interpreter=self, stack=stack,
+                                          with_jit=with_jit)
+            stmt = code.code[pc]
             pc += 1
 
             if stmt in [opcodes.ADD, opcodes.MUL, opcodes.SUB, opcodes.EQ,
@@ -78,29 +87,30 @@ class Interpreter(object):
                 elif stmt == opcodes.GE:
                     stack.append(lhs.ge(rhs))
             elif stmt == opcodes.JUMP_ABSOLUTE:
-                target = ord(bytecode[pc])
+                target = ord(code.code[pc])
                 if with_jit and target < pc:
-                    jitdriver.can_enter_jit(code=bytecode, pc=target,
+                    jitdriver.can_enter_jit(code=code, pc=target,
                                             consts=consts, frame=frame,
-                                            interpreter=self, stack=stack)
+                                            interpreter=self, stack=stack,
+                                            with_jit=with_jit)
                 pc = target
                 continue
             elif stmt == opcodes.JUMP_IF_FALSE:
                 if not stack.pop().true().boolvalue:
-                    pc += ord(bytecode[pc])
+                    pc += ord(code.code[pc])
                     continue
                 pc += 1
             elif stmt == opcodes.JUMP_IF_TRUE:
                 if stack.pop().true().boolvalue:
-                    pc += ord(bytecode[pc])
+                    pc += ord(code.code[pc])
                     continue
                 pc += 1
             elif stmt == opcodes.LOAD_CONST:
-                index = ord(bytecode[pc])
+                index = ord(code.code[pc])
                 pc += 1
                 stack.append(consts[index])
             elif stmt == opcodes.LOAD_NAME:
-                index = ord(bytecode[pc])
+                index = ord(code.code[pc])
                 pc += 1
                 # First, search the name in frame locals
                 name = consts[index].str().strvalue
@@ -121,12 +131,12 @@ class Interpreter(object):
                         obj = builtins[name]
                 stack.append(obj)
             elif stmt == opcodes.STORE_NAME:
-                index = ord(bytecode[pc])
+                index = ord(code.code[pc])
                 pc += 1
                 frame.locals[consts[index].str().strvalue] = stack.pop()
             elif stmt == opcodes.CALL:
                 func = stack.pop()
-                n_args = ord(bytecode[pc])
+                n_args = ord(code.code[pc])
                 pc += 1
                 args = [stack.pop() for _ in xrange(n_args)]
                 stack.append(func.call(self, args))
@@ -135,9 +145,9 @@ class Interpreter(object):
             elif stmt == opcodes.PRINT:
                 print stack.pop().str().strvalue
             elif stmt == opcodes.MAKE_FUNCTION:
-                index = ord(bytecode[pc])
+                index = ord(code.code[pc])
                 pc += 1
-                code = consts[index]
-                stack.append(Function(code))
+                fcode = consts[index]
+                stack.append(Function(fcode))
             else:
                 raise RuntimeError('Unknown opcode: ' + str(ord(stmt)))
