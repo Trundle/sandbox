@@ -231,6 +231,7 @@ class Str(Object):
 # Internal objects
 
 class Code(Object):
-    def __init__(self, code, consts):
+    def __init__(self, code, consts, flags):
         self.code = code
         self.consts = consts
+        self.flags = flags
