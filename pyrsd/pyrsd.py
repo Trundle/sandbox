@@ -55,7 +55,7 @@ def download(url, outdir):
         pd = re.search('(\d+) minute', data)
         if pd is not None:
             minwait = int(pd.group(1))
-            starttime = (datetime.now() + timedelta(minutes=minwait))
+            starttime = datetime.now() + timedelta(minutes=minwait)
 
             print "\t... waiting %d minutes (starting at %s) ..." % \
                 (minwait, starttime.strftime("%x %X"))
@@ -88,9 +88,12 @@ def download(url, outdir):
                 leeched += len(data)
                 elapsed = ttime() - starttime
                 speed = leeched / 1024 / elapsed
+                eta = (size - leeched) / 1024 / speed
+                eta = datetime.now() + timedelta(seconds=eta)
 
-                sys.stdout.write('\r\t%.01f%%\tavg. down: %.01f KiB/s     ' %
-                                 (leeched / size * 100, speed))
+                sys.stdout.write('\r\t%.01f%%\tavg. down: %.01f KiB/s' \
+                                 '\tETA: %s    ' % (leeched / size * 100,
+                                                    speed, eta.strftime("%X")))
                 sys.stdout.flush()
                 outfile.write(data)
 
