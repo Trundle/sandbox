@@ -9,7 +9,8 @@
 # TODO: The prepartion of the LaTeX file is a little hackish. One may want fix
 # this.
 #
-# Author: Sebastian Ramacher, 2010
+# Copyright: Copyright (C) 2010 by Sebastian Ramacher
+# License: Modified BSD
 
 LATEX=pdflatex -halt-on-error
 
