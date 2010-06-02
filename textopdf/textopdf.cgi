@@ -8,6 +8,8 @@
 #
 # TODO: The prepartion of the LaTeX file is a little hackish. One may want fix
 # this.
+#
+# Author: Sebastian Ramacher, 2010
 
 LATEX=pdflatex -halt-on-error
 
@@ -26,9 +28,8 @@ then
     die_error "not a POST request";
 fi
 
-
 ctype=`echo $CONTENT_TYPE | sed 's/^\(.*\); .*$/\1/'`
-boundary=`echo $CONTENT_TYPE | sed 's/.* boundary=\(.*\)$/\1/'`
+# boundary=`echo $CONTENT_TYPE | sed 's/.* boundary=\(.*\)$/\1/'`
 
 if [ $ctype != "multipart/form-data" ]
 then
