@@ -1,0 +1,53 @@
+--- dmenu.c.orig	2009-04-18 13:50:04.000000000 +0200
++++ dmenu.c	2010-01-13 13:25:48.616617115 +0100
+@@ -426,8 +426,18 @@
+ 		calcoffsets();
+ 		break;
+ 	case XK_Left:
+-		if(!(sel && sel->left))
+-			return;
++		if(!(sel && sel->left)) {
++                    if (item) {
++                        while(next) {
++                            sel = curr = next;
++                            calcoffsets();
++                        }
++                        while(sel && sel->right)
++                            sel = sel->right;
++                        break;
++                    }
++		    return;
++                }
+ 		sel=sel->left;
+ 		if(sel->right == curr) {
+ 			curr = prev;
+@@ -457,20 +467,21 @@
+ 		running = False;
+ 		break;
+ 	case XK_Right:
+-		if(!(sel && sel->right))
+-			return;
++        case XK_Tab:
++		if(!(sel && sel->right)) {
++                    if (item) {
++                        sel = curr = item;
++                        calcoffsets();
++                        break;
++                    }
++		    return;
++                }
+ 		sel=sel->right;
+ 		if(sel == next) {
+ 			curr = next;
+ 			calcoffsets();
+ 		}
+ 		break;
+-	case XK_Tab:
+-		if(!sel)
+-			return;
+-		strncpy(text, sel->text, sizeof text);
+-		match(text);
+-		break;
+ 	}
+ 	drawmenu();
+ }
