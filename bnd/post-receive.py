@@ -54,10 +54,13 @@ def main():
         old, new, refname = line.split()
         if new.strip('0') and refname.startswith('refs/heads/'):
             refname = refname[len('refs/heads/'):]
-            revisions = get_output('git', 'rev-list',
-                                    '%s..%s' % (old, new)).splitlines()
-            for revision in reversed(revisions):
-                send_commit_message(bot, repo, refname, revision)
+            if old.strip('0'):
+                revisions = get_output('git', 'rev-list',
+                                        '%s..%s' % (old, new)).splitlines()
+                for revision in reversed(revisions):
+                    send_commit_message(bot, repo, refname, revision)
+            else:
+                send_commit_message(bot, repo, refname, new)
 
 if __name__ == '__main__':
     main()
