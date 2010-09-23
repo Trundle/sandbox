@@ -52,15 +52,21 @@ def main():
 
     for line in sys.stdin:
         old, new, refname = line.split()
-        if new.strip('0') and refname.startswith('refs/heads/'):
+        if refname.startswith('refs/heads/'):
             refname = refname[len('refs/heads/'):]
-            if old.strip('0'):
-                revisions = get_output('git', 'rev-list',
-                                        '%s..%s' % (old, new)).splitlines()
-                for revision in reversed(revisions):
-                    send_commit_message(bot, repo, refname, revision)
+            if new.strip('0'):
+                if old.strip('0'):
+                    revisions = get_output('git', 'rev-list',
+                                            '%s..%s' % (old, new)).splitlines()
+                    for revision in reversed(revisions):
+                        send_commit_message(bot, repo, refname, revision)
+                else:
+                    msg = 'New branch: %s/%s' % (repo, refname)
+                    bot.say(CHANNEL, msg)
+                    send_commit_message(bot, repo, refname, new)
             else:
-                send_commit_message(bot, repo, refname, new)
+                msg = 'Branch %s/%s deleted (was: %s)' % (repo, refname, old)
+                bot.say(CHANNEL, msg)
 
 if __name__ == '__main__':
     main()
