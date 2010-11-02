@@ -65,11 +65,11 @@ def download(url, outdir):
             "slots|Unfortunately right now our servers are overloaded)",
             data, re.I) is not None:
             minwait = 5
-            starttime = datetime.now() + timedelta(minutes=5)
+            starttime = datetime.now() + timedelta(minutes=minwait)
             print "\t... no more download slots available - waiting %d " \
                 "minutes (starting at %s) ..." % (minwait,
                         starttime.strftime("%x %X"))
-            sleep(5 * 60)
+            sleep(minwait * 60)
             return download(url, outdir)
 
         timeout = int(re.search('var c=(\d+);', data).group(1))
