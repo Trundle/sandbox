@@ -73,7 +73,7 @@ def main(args=None):
       if opts.uppercase_letters:
         alphabet += LETTERS
       if opts.lowercase_letters:
-        alphabet += LETTERS.tolower()
+        alphabet += LETTERS.lower()
       if opts.digits:
         alphabet += DIGITS
       if opts.special:
