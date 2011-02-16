@@ -270,7 +270,7 @@ struct Expression
         using bs::lexeme;
         using bs::lit;
         using bs::raw;
-        using bs::arg_names::_1;
+        using bs::qi::_1;
         using bs::ascii::alnum;
         using bs::ascii::alpha;
         using boost::phoenix::construct;
