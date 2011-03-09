@@ -1,0 +1,28 @@
+#!/bin/bash
+
+function print_usage
+{
+  echo "pkg-from-dist [stable|testing|unstable|experimental]"
+  echo "... lists every package installed from the given distribution."
+  echo "The default distribution is unstable."
+}
+
+if [ "$2" != "" ] ; then
+  print_usage;
+  exit 1;
+fi
+
+dist=unstable
+if [ "$1" != "" ] ; then
+  dist=$1;
+fi
+
+case $dist in
+  stable|testing|unstable|experimental) ;;
+  *)
+    print_usage;
+    exit 1;
+    ;;
+esac
+
+apt-show-versions | grep "/${dist}" | sed 's/\/.*$//g'
