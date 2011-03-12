@@ -28,7 +28,7 @@ def add_alphabet_option(parser, shortname, longname, noname, destination, descri
   parser.add_option(shortname, longname, dest=destination, help=description,
                     action="store_true", default=default)
   parser.add_option(noname, dest=destination, help=description,
-                    action="store_true", default=default)
+                    action="store_false", default=default)
 
 def generate_password(length, alphabet):
   return "".join(choice(alphabet) for x in xrange(length))
