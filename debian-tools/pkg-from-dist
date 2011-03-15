@@ -7,6 +7,13 @@ function print_usage
   echo "The default distribution is unstable."
 }
 
+which apt-show-versions > /dev/null
+if [ $? -ne 0 ] ; then
+  echo "E: apt-show-versions cannot be found.";
+  echo "E: Please install the apt-show-versions package.";
+  exit 1;
+fi
+
 if [ "$2" != "" ] ; then
   print_usage;
   exit 1;
