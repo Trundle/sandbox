@@ -1,0 +1,35 @@
+#!/bin/bash
+
+function print_usage
+{
+  echo "pkg-from-dist [oldstable|stable|testing|unstable|experimental]"
+  echo "... lists every package installed from the given distribution."
+  echo "The default distribution is unstable."
+}
+
+which apt-show-versions > /dev/null
+if [ $? -ne 0 ] ; then
+  echo "E: apt-show-versions cannot be found.";
+  echo "E: Please install the apt-show-versions package.";
+  exit 1;
+fi
+
+if [ "$2" != "" ] ; then
+  print_usage;
+  exit 1;
+fi
+
+dist=unstable
+if [ "$1" != "" ] ; then
+  dist=$1;
+fi
+
+case $dist in
+  oldstable|stable|testing|unstable|experimental) ;;
+  *)
+    print_usage;
+    exit 1;
+    ;;
+esac
+
+apt-show-versions | grep "/${dist}" | sed 's/\/.*$//g'
