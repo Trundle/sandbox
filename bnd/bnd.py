@@ -48,7 +48,7 @@ class XMLRPCInterface(xmlrpc.XMLRPC):
         return NOT_DONE_YET
 
     def xmlrpc_say(self, channel, message):
-        self.client.say(channel, message)
+        self.client.msg(channel, message)
         return True
 
 
