@@ -33,7 +33,8 @@ def main(args=None):
 
     source = sys.stdin.read()
     try:
-        url = pastebin(source, options.syntax, options.parent, options.private)
+        url = pastebin(source, options.syntax, options.parent,
+                       private=options.private)
     except XMLRPCError, exc:
         print >> sys.stderr, 'Paste failed:', exc
     else:
