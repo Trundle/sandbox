@@ -42,7 +42,8 @@ class FifoIRC(irc.IRCClient):
           if not line:
             time.sleep(1)
             continue
-          reactor.callFromThread(self.msg, self.factory.channel, line)
+          reactor.callFromThread(self.msg, self.factory.channel,
+                                 line.rstrip('\n\r'))
     except OSError:
       pass
 
