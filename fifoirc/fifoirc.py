@@ -81,7 +81,8 @@ class FifoIRCFactory(ReconnectingClientFactory):
 
   def clientConnectionFailed(self, connector, reason):
     print 'I: Connection failed: %s' % (str(reason.getErrorMessage()), )
-    reactor.stop()
+    return ReconnectingClientFactory.clientConnectionFailed(self, connector,
+                                                            reason)
 
 
 def main(args=None):
