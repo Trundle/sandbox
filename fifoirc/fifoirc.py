@@ -101,10 +101,15 @@ def main(args=None):
   parser.add_option('--create-fifo', dest='create_fifo', action='store_true',
                     default=False)
   parser.add_option('--nick', dest='nick', type='string', default='FifoIRC')
+  parser.add_option('--bind', dest='bind_ip', type='string', default='')
   opts, args = parser.parse_args(args=args)
   if len(args) != 2:
     parser.print_usage()
     return 1
+
+  bind_address = None
+  if len(opts.bind_ip):
+    bind_address = (opts.bind_ip, 0)
 
   if opts.create_fifo and not os.path.exists(opts.fifo):
     os.mkfifo(opts.fifo)
@@ -114,9 +119,10 @@ def main(args=None):
 
   factory = FifoIRCFactory(args[1], opts.nick, opts.fifo)
   if opts.ssl:
-    reactor.connectSSL(args[0], opts.port, factory, ssl.ClientContextFactory())
+    reactor.connectSSL(args[0], opts.port, factory, ssl.ClientContextFactory(),
+                       bindAddress=bind_address)
   else:
-    reactor.connectTCP(args[0], opts.port, factory)
+    reactor.connectTCP(args[0], opts.port, factory, bindAddress=bind_address)
 
   try:
     reactor.run()
