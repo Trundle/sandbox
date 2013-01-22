@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2011-2012, Sebastian Ramacher
+# Copyright (C) 2011-2013, Sebastian Ramacher
 # This file is released under a modified BSD license. See LICENSE for
 # details.
 ################################################################################
@@ -48,7 +48,7 @@ class FifoIRC(irc.IRCClient):
     # This is not really in the spirit of twisted. But I am not motiviated
     # enough to implement in a sane way.
     try:
-      while True:
+      while self.fd is not None:
         d = os.read(self.fd, 1024)
         if not d:
           time.sleep(1)
