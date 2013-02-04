@@ -4,6 +4,8 @@
     Like drun, but different.
 """
 
+import argparse
+import collections
 import io
 import os
 import re
@@ -12,7 +14,7 @@ import sys
 import tempfile
 import time
 import unicodedata
-from itertools import chain, islice
+from itertools import chain, dropwhile, islice
 from functools import wraps
 
 from gi.repository import Gdk, GLib, GObject, Gtk, Pango
@@ -20,10 +22,6 @@ from gi.repository import Gdk, GLib, GObject, Gtk, Pango
 
 ### Settings ###################################################################
 
-FONT = "Inconsolata 16"
-BG_COLOR = "#000000"
-FG_COLOR = "green"
-HISTFILE = "~/.config/mrun.history"
 HISTSIZE = 100
 TERMINAL = (
     "urxvt +sb "
@@ -83,7 +81,14 @@ def do_previous(menu):
     menu.update()
 
 def do_select(menu):
-    menu.emit("selected", "".join(menu.input), False)
+    """Selects the current input. Automatically expands to the current
+    match if there is a current match before selecting.
+    """
+    if menu.matches:
+        match = menu.matches[menu.index]
+    else:
+        match = "".join(menu.input)
+    menu.emit("selected", match, False)
 
 # XXX select2 is a terrible name
 def do_select2(menu):
@@ -127,14 +132,14 @@ class Menu(GObject.GObject):
         (Gdk.ModifierType.SHIFT_MASK, Gdk.KEY_ISO_Left_Tab): "previous"
     }
 
-    def __init__(self, matcher):
+    def __init__(self, matcher, *, font, bg_color, fg_color):
         super(Menu, self).__init__()
         self.input = []
         self.matcher = matcher
         self.matches = []
         self.index = 0
         self._keys_grabbed = False
-        self._create_widgets()
+        self._create_widgets(font=font, bg_color=bg_color, fg_color=fg_color)
 
     @property
     def index(self):
@@ -176,14 +181,14 @@ class Menu(GObject.GObject):
                 markup += "[no matches]"
         self._label.set_markup(markup)
 
-    def _create_widgets(self):
+    def _create_widgets(self, font, bg_color, fg_color):
         self._window = Gtk.Window(Gtk.WindowType.POPUP)
-        bg_color = color_to_rgba(BG_COLOR)
+        bg_color = color_to_rgba(bg_color)
         self._window.override_background_color(Gtk.StateFlags.NORMAL, bg_color)
         self._label = Gtk.Label()
-        fg_color = color_to_rgba(FG_COLOR)
+        fg_color = color_to_rgba(fg_color)
         self._label.override_color(Gtk.StateFlags.NORMAL, fg_color)
-        self._label.override_font(Pango.FontDescription(FONT))
+        self._label.override_font(Pango.FontDescription(font))
         self._label.set_halign(Gtk.Align.START)
         self._label.set_ellipsize(Pango.EllipsizeMode.END)
         self._window.add(self._label)
@@ -258,15 +263,41 @@ class Menu(GObject.GObject):
 
 ### Matchers ###################################################################
 
+_Value = collections.namedtuple("_Value", ["value", "lower"])
+class _Marker:
+    def __init__(self):
+        self.lower = self
+        self.value = self
+
+    def __len__(self):
+        return sys.maxsize
+
+    def find(self, _):
+        return -1
+
+class InsensitiveMatcher:
+    def __init__(self, values):
+        self._marker = _Marker()
+        self.values = set(_Value(x, x.lower()) for x in values)
+        self.values.add(self._marker)
+
+    def get_matches(self, input):
+        def keyfunc(value):
+            return (value.lower.find(input_lower), len(value.value))
+        input_lower = input.lower()
+        matches = sorted(self.values, key=keyfunc)
+        matches_iter = dropwhile(lambda x: x is not self._marker, matches)
+        for match in islice(matches_iter, 1, None):
+            yield match.value
+
+
 class ExecutableMatcher:
+    "Case-insensitively matches executables found in $PATH."
+
     def __init__(self):
         self.executables = set()
         self._fill()
-
-    def get_matches(self, input):
-        return sorted(
-            set(x for x in self.executables if input in x),
-            key=lambda x: (x.index(input), len(x)))
+        self.get_matches = InsensitiveMatcher(self.executables).get_matches
 
     def _fill(self):
         for path in os.environ["PATH"].split(os.pathsep):
@@ -277,23 +308,20 @@ class ExecutableMatcher:
             except EnvironmentError:
                 pass
 
-
 class HistoryMatcher:
+    "Case-insensitively matches entries out of the history file."
+
     def __init__(self, history_path):
         try:
             with open(history_path, "r") as hist_file:
                 self.history = [line.strip("\n") for line in hist_file]
         except EnvironmentError:
             self.history = []
+        self.get_matches = InsensitiveMatcher(self.history).get_matches
         self.history_path = history_path
 
     def append(self, entry):
         self.history.append(entry)
-
-    def get_matches(self, input):
-        return sorted(
-            set(x for x in self.history if input in x),
-            key=lambda x: (x.index(input), len(x)))
 
     def write_history(self, number_of_entries):
         history_dir = os.path.dirname(self.history_path)
@@ -307,12 +335,18 @@ class HistoryMatcher:
             raise
 
 
-class Matcher:
+class ChainedMatcher:
     def __init__(self, matchers):
         self.matchers = matchers
 
     def get_matches(self, input):
-        return list(chain.from_iterable(m(input) for m in self.matchers))
+        def inner():
+            already_seen = set()
+            for value in chain.from_iterable(m(input) for m in self.matchers):
+                if value not in already_seen:
+                    already_seen.add(value)
+                    yield value
+        return list(inner())
 
 
 ### Application logic ##########################################################
@@ -331,15 +365,30 @@ def on_quit(menu):
     menu.hide()
     Gtk.main_quit()
 
+def _create_argument_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-bg", "--bg-color", default="#000000")
+    parser.add_argument("-fg", "--fg-color", default="green")
+    parser.add_argument("-f", "--font", default="Inconsolata 16")
+    parser.add_argument("--histfile", default="~/.config/forrest.history")
+    return parser
+
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
 
-    history_matcher = HistoryMatcher(os.path.expanduser(HISTFILE))
-    matcher = Matcher([
+    parsed_args = _create_argument_parser().parse_args(args)
+
+    history_path = os.path.expanduser(parsed_args.histfile)
+    history_matcher = HistoryMatcher(history_path)
+    matcher = ChainedMatcher([
         history_matcher.get_matches,
         ExecutableMatcher().get_matches])
-    menu = Menu(matcher.get_matches)
+    menu = Menu(
+        matcher.get_matches,
+        font=parsed_args.font,
+        bg_color=parsed_args.bg_color,
+        fg_color=parsed_args.fg_color)
     menu.connect("selected", on_selected, history_matcher)
     menu.connect("quit", on_quit)
     GLib.idle_add(menu.show)
