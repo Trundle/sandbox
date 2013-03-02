@@ -57,8 +57,10 @@ def main(args=None):
     hist_file = os.path.expanduser(HISTFILE)
     history = load_history(hist_file)
 
+    unemd_args = [os.path.join(os.path.dirname(__file__), "unemd.py")]
+    unemd_args.extend(args)
     menu = subprocess.Popen(
-        os.path.join(os.path.dirname(__file__), "unemd.py"),
+        unemd_args,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE)
     executables = sorted(get_all_executables())

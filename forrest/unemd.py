@@ -117,7 +117,7 @@ class Menu(GObject.GObject):
         (Gdk.ModifierType.SHIFT_MASK, Gdk.KEY_ISO_Left_Tab): "previous"
     }
 
-    def __init__(self, matcher, font, bg_color, fg_color):
+    def __init__(self, matcher, font, bg_color, fg_color, at_bottom=False):
         super(Menu, self).__init__()
         self.input = []
         self.matcher = matcher
@@ -126,6 +126,7 @@ class Menu(GObject.GObject):
         self._keys_grabbed = False
         self.bg_color = color_to_rgba(bg_color)
         self.fg_color = color_to_rgba(fg_color)
+        self.at_bottom = at_bottom
         self._create_widgets(font=font)
 
     @property
@@ -230,7 +231,11 @@ class Menu(GObject.GObject):
         monitor_number = screen.get_monitor_at_point(pointer_x, pointer_y)
         monitor_rect = screen.get_monitor_geometry(monitor_number)
         (_, natural_height) = self._label.get_preferred_height()
-        self._window.move(monitor_rect.x, monitor_rect.y)
+        if self.at_bottom:
+            y = monitor_rect.y + monitor_rect.height - natural_height
+        else:
+            y = monitor_rect.y
+        self._window.move(monitor_rect.x, y)
         self._window.set_default_size(monitor_rect.width, natural_height)
 
     def input_changed(self):
@@ -295,6 +300,10 @@ def on_quit(menu):
 
 def _create_argument_parser():
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-b", "--bottom",
+        action="store_true",
+        help="Make the menu appear at the bottom of the screen.")
     parser.add_argument("-bg", "--bg-color", default="#000000")
     parser.add_argument("-fg", "--fg-color", default="green")
     parser.add_argument("-fn", "--font", default="Inconsolata 16")
@@ -310,7 +319,8 @@ def main(args=None):
         InsensitiveMatcher(sys.stdin.read().splitlines()).get_matches,
         font=parsed_args.font,
         bg_color=parsed_args.bg_color,
-        fg_color=parsed_args.fg_color)
+        fg_color=parsed_args.fg_color,
+        at_bottom=parsed_args.bottom)
     menu.connect("selected", on_selected)
     menu.connect("quit", on_quit)
     GLib.idle_add(menu.show)
