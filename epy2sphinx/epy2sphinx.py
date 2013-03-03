@@ -32,73 +32,6 @@ from pygments.token import Token
 _ENCODING_COOKIE = re.compile("coding[:=]\s*([-\w.]+)")
 
 
-class DocstringFilter(Filter):
-    """Also converts single-quoted docstrings into docstring
-    tokens. Assumes tokens are grouped by the TokenMergeFilter.
-    """
-
-    def filter(self, lexer, stream):
-        token_iter = iter(stream)
-        self._consumer = self._until_definition
-        try:
-            while True:
-                for token in self._consumer(token_iter):
-                    yield token
-        except StopIteration:
-            pass
-
-    def _eos(self):
-        "End of stream reached."
-        def raise_StopIteration(_):
-            raise StopIteration
-        self._consumer = raise_StopIteration
-        raise StopIteration
-
-    def _until_definition(self, token_iter):
-        for (ttype, value) in token_iter:
-            yield (ttype, value)
-            if ttype is Token.Keyword and value in {"def", "class"}:
-                self._consumer = self._in_definition
-                break
-        else:
-            self._eos()
-
-    def _in_definition(self, token_iter):
-        """We are in the middle of a function or class definition. Find the
-        end of the definition.
-        """
-        depth = 0
-        for (ttype, value) in token_iter:
-            yield (ttype, value)
-            if ttype is Token.Punctuation:
-                for paren in "{([":
-                    depth += value.count(paren)
-                for paren in "})]":
-                    depth -= value.count(paren)
-                if value.endswith(":") and depth == 0:
-                    # End of definition
-                    self._consumer = self._convert_to_docstring
-                    break
-        else:
-            self._eos()
-
-    def _convert_to_docstring(self, token_iter):
-        """We are right after a function or class definition. If the next
-        (non-whitespace) token is a string, convert it to a docstring
-        token.
-        """
-        for (ttype, value) in token_iter:
-            if ttype is Token.Literal.String:
-                yield (Token.Literal.String.Doc, value)
-                break
-            else:
-                yield (ttype, value)
-                if ttype not in {Token.Comment, Token.Text}:
-                    break
-        # Start again
-        self._consumer = self._until_definition
-
-
 class ConverterFilter(Filter):
     "Converts epydoc markup to sphinx markup."
 
@@ -128,7 +61,6 @@ class Converter:
         self._formatter = NullFormatter()
         self._lexer = Python3Lexer(ensurenl=False, stripnl=False)
         self._lexer.add_filter("tokenmerge")
-        self._lexer.add_filter(DocstringFilter())
         if filter is None:
             filter = ConverterFilter()
         self._lexer.add_filter(filter)
