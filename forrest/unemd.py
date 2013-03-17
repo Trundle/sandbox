@@ -128,6 +128,7 @@ class Menu(GObject.GObject):
         self.fg_color = color_to_rgba(fg_color)
         self.at_bottom = at_bottom
         self._create_widgets(font=font)
+        self.input_changed()
 
     @property
     def index(self):
@@ -154,19 +155,18 @@ class Menu(GObject.GObject):
         "Should be called after the `input` attribute was changed."
         input = "".join(self.input)
         markup = input
-        if input:
-            if self.matches:
-                matches = self.matches
-                markup += "{"
-                markup += self._format_first_match(input, matches[self.index])
-                if len(matches) > 1:
-                    remaining_matches = chain(
-                        islice(matches, self.index + 1, None),
-                        islice(matches, max(self.index, 0)))
-                    markup += " | " + " | ".join(remaining_matches)
-                markup += "}"
-            else:
-                markup += "[no matches]"
+        if self.matches:
+            matches = self.matches
+            markup += "{"
+            markup += self._format_first_match(input, matches[self.index])
+            if len(matches) > 1:
+                remaining_matches = chain(
+                    islice(matches, self.index + 1, None),
+                    islice(matches, max(self.index, 0)))
+                markup += " | " + " | ".join(remaining_matches)
+            markup += "}"
+        else:
+            markup += "[no matches]"
         self._label.set_markup(markup)
 
     def _create_widgets(self, font):
