@@ -24,8 +24,8 @@ def main(args=None):
     parser.add_option('-p', dest='parent', type='string', default='')
     parser.add_option("-s", dest="syntax", type='string', default='pycon',
                   help="Syntax highlighting: py, bash, sql, xml, c, c++, etc")
-    parser.add_option('-P', dest='private', action='store_true', default=False,
-                      help="Create private paste")
+    parser.add_option('-P', dest='private', action='store_false', default=True,
+                      help="Create a public paste")
     options, args = parser.parse_args(args)
     if args:
         parser.print_usage()
