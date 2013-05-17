@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 import sys
 from optparse import OptionParser
-from urlparse import urljoin
-from xmlrpclib import ServerProxy, Error as XMLRPCError
+try:
+    from urlparse import urljoin
+    from xmlrpclib import ServerProxy, Error as XMLRPCError
+except ImportError:
+    # Python 3
+    from urllib.parse import urljoin
+    from xmlrpc.client import ServerProxy, Error as XMLRPCError
 
 
 URL = 'http://bpaste.net/'
@@ -10,7 +15,7 @@ URL = 'http://bpaste.net/'
 
 def pastebin(source, syntax, parent='', filename='', mimetype='', private=False):
     """Upload to a pastebin and output the URL"""
-    pasteservice = ServerProxy(urljoin(URL, '/xmlrpc/'))
+    pasteservice = ServerProxy(urljoin(URL, 'xmlrpc/'))
     paste_id = pasteservice.pastes.newPaste(syntax, source, parent,
                                             filename, mimetype, private)
     return urljoin(URL, '/show/%s/' % (paste_id, ))
@@ -35,10 +40,11 @@ def main(args=None):
     try:
         url = pastebin(source, options.syntax, options.parent,
                        private=options.private)
-    except XMLRPCError, exc:
-        print >> sys.stderr, 'Paste failed:', exc
+    except XMLRPCError:
+        exc = sys.exc_info()[1]
+        sys.stderr.write('Paste failed: %s\n' % (str(exc), ))
     else:
-        print 'Paste succeeded, available as', url
+        sys.stdout.write('Paste succeeded, available as %s\n' % (url, ))
 
     return 0
 
