@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
 # Copyright 2011,2014 Sebastian Ramacher <sebastian+dev@ramacher.at>
@@ -32,7 +32,7 @@
   :license: Expat.
 """
 
-__version__ = "1.0"
+__version__ = "1.1"
 __author__ = "Sebastian Ramacher"
 
 from optparse import OptionParser
@@ -52,7 +52,7 @@ def add_alphabet_option(parser, shortname, longname, noname, destination, descri
                     action="store_false", default=default)
 
 def generate_password(length, alphabet):
-  return "".join(choice(alphabet) for x in xrange(length))
+  return "".join(choice(alphabet) for x in range(length))
 
 def main(args=None):
   if args is None:
@@ -79,10 +79,10 @@ def main(args=None):
   )
   for o in options:
     add_alphabet_option(parser, *o)
-        
+
   opts, args = parser.parse_args(args)
   if opts.length <= 0:
-    print "E: length cannot be <= 0"
+    print("E: length cannot be <= 0")
     return 1
 
   alphabet = opts.alphabet
@@ -101,12 +101,12 @@ def main(args=None):
         alphabet += SPECIAL_CHARS
 
   if len(alphabet) <= 1:
-    print "E: an alphabet of size <= 1 is definitely not safe at all"
+    print("E: an alphabet of size <= 1 is definitely not safe at all")
     return 1
   elif len(alphabet) <= 10:
-    print "W: short alphabet"
+    print("W: short alphabet")
 
-  print generate_password(opts.length, alphabet)
+  print(generate_password(opts.length, alphabet))
 
 import sys
 if __name__ == "__main__":
