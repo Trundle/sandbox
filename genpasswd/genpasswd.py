@@ -36,7 +36,7 @@ __version__ = "1.0"
 __author__ = "Sebastian Ramacher"
 
 from optparse import OptionParser
-from random import choice
+from Crypto.Random.random import choice
 
 DIGITS="0123456789"
 SPECIAL_CHARS="$_-|=+*-/\!?.:"
