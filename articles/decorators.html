@@ -1,0 +1,290 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Dekoratoren in Python, erklärt in Farbe &mdash; decorators 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="decorators 0.1 documentation" href="index.html" /> 
+  </head>
+  <body>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="dekoratoren-in-python-erklart-in-farbe">
+<h1>Dekoratoren in Python, erklärt in Farbe<a class="headerlink" href="#dekoratoren-in-python-erklart-in-farbe" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Die Code-Beispiele sind in Python 2-Syntax gehalten. Das Übersetzen nach Python 3 wird dem Leser als Übung überlassen.</p>
+</div>
+<div class="section" id="was-sind-dekoratoren">
+<h2>Was sind Dekoratoren?<a class="headerlink" href="#was-sind-dekoratoren" title="Permalink to this headline">¶</a></h2>
+<p>Wie der Namen bereits vermuten lässt, dekorieren Dekoratoren
+etwas. Bei Python sind es Funktionen bzw. Methoden und seit Version
+2.6/3.0 auch Klassen. Ein Beispiel für Dekoratoren:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@decorator</span>
+<span class="k">def</span> <span class="nf">spam</span><span class="p">():</span>
+    <span class="k">print</span> <span class="s">&quot;Ich bin spam.&quot;</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Ein Hinweis für Java-Entwickler: Die Syntax sieht zwar ähnlich aus wie Annotations in Java, hat aber ansonsten nichts mit Annotations in Java zu tun.</p>
+</div>
+<p>Was passiert jetzt, wenn man den obigen Code ausführt?</p>
+<div class="highlight-pycon"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nd">@decorator</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">spam</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&quot;Ich bin spam.&quot;</span>
+<span class="gp">...</span>
+<span class="gt">Traceback (most recent call last):</span>
+  File <span class="nb">&quot;&lt;stdin&gt;&quot;</span>, line <span class="m">1</span>, in <span class="n">&lt;module&gt;</span>
+<span class="gr">NameError</span>: <span class="n">name &#39;decorator&#39; is not defined</span>
+</pre></div>
+</div>
+<p>Der <tt class="docutils literal"><span class="pre">NameError</span></tt> ist jetzt natürlich wenig überraschend, schließlich
+wurde der Dekorator <tt class="docutils literal"><span class="pre">decorator</span></tt> noch nicht definiert. Im Folgenden
+werden wir das nachholen:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="k">print</span> <span class="s">&quot;Ich bin ein Dekorator und dekoriere&quot;</span><span class="p">,</span> <span class="n">func</span><span class="o">.</span><span class="n">__name__</span>
+    <span class="k">return</span> <span class="n">func</span>
+</pre></div>
+</div>
+<p>Was passiert jetzt, wenn man den obigen Code ausführt?</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&quot;Ich bin ein Dekorator und dekoriere&quot;</span><span class="p">,</span> <span class="n">func</span><span class="o">.</span><span class="n">__name__</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">func</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nd">@decorator</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">spam</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&quot;Ich bin spam.&quot;</span>
+<span class="gp">...</span>
+<span class="go">Ich bin ein Dekorator und dekoriere spam</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">spam</span>
+<span class="go">&lt;function spam at 0x7f8d95b3c488&gt;</span>
+</pre></div>
+</div>
+<p>Und was, wenn man die dekorierte Funktion ausführt?</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">spam</span><span class="p">()</span>
+<span class="go">Ich bin spam.</span>
+</pre></div>
+</div>
+<p>Wie einfach zu erkennen ist, hat unser simpler Beispiel-Dekorator
+keine direkte Auswirkung auf die dekorierte Funktion.</p>
+</div>
+<div class="section" id="ich-weisz-jetzt-noch-immer-nicht-was-ein-dekorator-ist">
+<h2>Ich weiß jetzt noch immer nicht, was ein Dekorator ist<a class="headerlink" href="#ich-weisz-jetzt-noch-immer-nicht-was-ein-dekorator-ist" title="Permalink to this headline">¶</a></h2>
+<p>Ein Beispiel alleine erklärt natürlich nicht, was ein Dekorator
+ist. Was ist also ein Dekorator? Ein Dekorator ist nichts anderes als
+ein Callable, das implizit als Argument die zu dekorierende Funktion
+bzw. Methode bzw. Klasse übergeben bekommt. Der Rückgabewert des
+Dekorators wird dann an den Namen der Funktion bzw. Methode
+bzw. Klasse gebunden. Anders ausgedrückt:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@decorator</span>
+<span class="k">def</span> <span class="nf">spam</span><span class="p">():</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<p>ist nichts anderes als syntaktischer Zucker für</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">spam</span><span class="p">():</span>
+    <span class="k">pass</span>
+<span class="n">spam</span> <span class="o">=</span> <span class="n">decorator</span><span class="p">(</span><span class="n">spam</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Das ist auch der Grund, warum unser Beispieldekorator <tt class="docutils literal"><span class="pre">decorator</span></tt>
+die Funktion explizit wieder zurück gibt.</p>
+<p>Das, was nach dem <tt class="docutils literal"><span class="pre">&#64;</span></tt> folgt, muss jedoch nicht zwingend ein Name
+sein. Vielmehr kann es ein beliebiger Ausdruck sein. Der Ausdruck
+wird evaluiert und das Ergebnis des Ausdrucks ist dann der Dekorator.
+Um das zu verdeutlichen, folgt jetzt ein Beispiel für eine
+Dekoratoren-Factory:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">decorator_for</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ich bin eine Factory und ich gebe einen Dekorator zurück.&quot;&quot;&quot;</span>
+    <span class="k">print</span> <span class="s">&quot;Erzeuge einen Dekorator für&quot;</span><span class="p">,</span> <span class="n">name</span>
+    <span class="c"># Den eigentlichen Dekorator (aus dem vorigen Beispiel) zurück geben</span>
+    <span class="k">return</span> <span class="n">decorator</span>
+
+<span class="nd">@decorator_for</span><span class="p">(</span><span class="s">&quot;Csaba&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">spam</span><span class="p">():</span>
+    <span class="k">print</span> <span class="s">&quot;Ich bin spam.&quot;</span>
+</pre></div>
+</div>
+<p>Und wieder die Frage, was passiert, wenn man den Code ausführt?</p>
+<div class="highlight-pycon"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">decorator_for</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="sd">&quot;&quot;&quot;Ich bin eine Factory und ich gebe einen Dekorator zurück.&quot;&quot;&quot;</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&quot;Erzeuge einen Dekorator für&quot;</span><span class="p">,</span> <span class="n">name</span>
+<span class="gp">... </span>    <span class="c"># Den eigentlichen Dekorator (aus dem vorigen Beispiel) zurück geben</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">decorator</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nd">@decorator_for</span><span class="p">(</span><span class="s">&quot;Csaba&quot;</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">spam</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&quot;Ich bin spam.&quot;</span>
+<span class="gp">...</span>
+<span class="go">Erzeuge einen Dekorator für Csaba</span>
+<span class="go">Ich bin ein Dekorator und dekoriere spam</span>
+</pre></div>
+</div>
+<p>Und was passiert, wenn man die dekorierte Funktion ausführt?</p>
+<div class="highlight-pycon"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">spam</span><span class="p">()</span>
+<span class="go">Ich bin spam.</span>
+</pre></div>
+</div>
+<p>Wie zu erwarten, noch immer nichts spektakuläres.</p>
+</div>
+<div class="section" id="wann-wird-ein-dekorator-ausgefuhrt">
+<h2>Wann wird ein Dekorator ausgeführt?<a class="headerlink" href="#wann-wird-ein-dekorator-ausgefuhrt" title="Permalink to this headline">¶</a></h2>
+<p>Der aufmerksame Leser kann sich diese Frage bereits selbst
+beantworten: Der Dekorator wird nicht etwa bei jedem Aufruf der
+dekorierten Funktion bzw. Methode aufgerufen, sondern genau ein
+einziges Mal, nämlich dann, wenn die Funktion bzw. Methode deklariert
+wird.</p>
+</div>
+<div class="section" id="ich-will-aber-dass-bei-jedem-funktionsaufruf-etwas-passiert">
+<h2>Ich will aber, dass bei jedem Funktionsaufruf etwas passiert<a class="headerlink" href="#ich-will-aber-dass-bei-jedem-funktionsaufruf-etwas-passiert" title="Permalink to this headline">¶</a></h2>
+<p>Auch das kann sich der aufmerksame Leser bereits selber herleiten: Wie
+bereits erwähnt, wird der Rückgabewert des Dekorators an den Namen der
+Funktion gebunden, die dekoriert wird. Als Beispiel also jetzt ein
+Dekorator, der <em>nicht</em> explizit die dekorierte Funktion wieder
+zurückgibt.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">useless_decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">None</span>
+</pre></div>
+</div>
+<div class="highlight-pycon"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nd">@useless_decorator</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">spam</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&quot;Ich bin spam.&quot;</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">spam</span><span class="p">()</span>
+<span class="gt">Traceback (most recent call last):</span>
+  File <span class="nb">&quot;&lt;stdin&gt;&quot;</span>, line <span class="m">1</span>, in <span class="n">&lt;module&gt;</span>
+<span class="gr">TypeError</span>: <span class="n">&#39;NoneType&#39; object is not callable</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">spam</span>
+<span class="go">&gt;&gt;&gt;</span>
+</pre></div>
+</div>
+<p>Da der Dekorator <tt class="docutils literal"><span class="pre">None</span></tt> zurückgibt, wird auch <tt class="docutils literal"><span class="pre">None</span></tt> an den Namen
+der Funktion, also <tt class="docutils literal"><span class="pre">spam</span></tt>, gebunden und die ursprüngliche Funktion
+ging verloren.</p>
+<p>Man kann jetzt natürlich nicht nur die Original-Funktion oder <tt class="docutils literal"><span class="pre">None</span></tt>
+zurück geben. Vielmehr kann man auch einen Wrapper zurück geben, der
+dann die ursprüngliche Funktion aufruft. Damit hat man dann das
+erreicht, was man wollte: Bei Jedem Funktionsaufruf soll etwas
+passieren.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">verbose_caller</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="k">print</span> <span class="s">&quot;Erzeuge einen Wrapper für die Funktion&quot;</span><span class="p">,</span> <span class="n">func</span><span class="o">.</span><span class="n">__name__</span>
+
+    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">():</span>
+        <span class="k">print</span> <span class="s">&quot;Rufe die Funktion&quot;</span><span class="p">,</span> <span class="n">func</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="s">&quot;auf&quot;</span>
+        <span class="n">func</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">wrapper</span>
+</pre></div>
+</div>
+<div class="highlight-pycon"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nd">@verbose_caller</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">spam</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&quot;Ich bin spam&quot;</span>
+<span class="gp">...</span>
+<span class="go">Erzeuge einen Wrapper für die Funktion spam</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">spam</span><span class="p">()</span>
+<span class="go">Rufe die Funktion spam auf</span>
+<span class="go">Ich bin spam</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">spam</span>
+<span class="go">&lt;function wrapper at 0x7f8d95b3c758&gt;</span>
+</pre></div>
+</div>
+<p>So gesehen ist der Dekorator in diesem Fall nichts anderes als eine
+Wrapper-Factory.</p>
+<p>Da das immer noch ziemlich langweilig ist, wollen wir uns jetzt einen
+personalisierten Wrapper erzeugen. Dazu bauen wir eine
+Wrapper-Factory-Factory:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">verbose_caller_for</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+   <span class="k">print</span> <span class="s">&quot;Erzeuge eine Wrapper-Factory für&quot;</span><span class="p">,</span> <span class="n">name</span>
+
+   <span class="k">def</span> <span class="nf">verbose_caller</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+       <span class="k">print</span> <span class="s">&quot;Erzeuge einen Wrapper für die Funktion&quot;</span><span class="p">,</span> <span class="n">func</span><span class="o">.</span><span class="n">__name__</span>
+
+       <span class="k">def</span> <span class="nf">wrapper</span><span class="p">():</span>
+           <span class="k">print</span> <span class="s">&quot;Rufe die Funktion&quot;</span><span class="p">,</span> <span class="n">func</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="s">&quot;für&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s">&quot;auf&quot;</span>
+           <span class="n">func</span><span class="p">()</span>
+       <span class="k">return</span> <span class="n">wrapper</span>
+   <span class="k">return</span> <span class="n">verbose_caller</span>
+</pre></div>
+</div>
+<div class="highlight-pycon"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nd">@verbose_caller_for</span><span class="p">(</span><span class="s">&quot;Csaba&quot;</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">spam</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&quot;Ich bin spam&quot;</span>
+<span class="gp">...</span>
+<span class="go">Erzeuge eine Wrapper-Factory für Csaba</span>
+<span class="go">Erzeuge einen Wrapper für die Funktion spam</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">spam</span><span class="p">()</span>
+<span class="go">Rufe die Funktion spam für Csaba auf</span>
+<span class="go">Ich bin spam</span>
+</pre></div>
+</div>
+<p>Da das ganze langsam doch recht unübersichtlich wird, überlegen wir
+uns als gute Entwickler, wie man das ganze verschönern könnte.</p>
+</div>
+<div class="section" id="klassenbasierte-dekoratoren">
+<h2>Klassenbasierte Dekoratoren<a class="headerlink" href="#klassenbasierte-dekoratoren" title="Permalink to this headline">¶</a></h2>
+<p>Dekoratoren sind einfach Callables, die das zu dekorierende Objekt
+entgegen nehmen. Instanzen von Klassen können jedoch ein Callable
+implementieren, über die spezielle Methode <tt class="docutils literal"><span class="pre">__call__</span></tt>. Warum also
+nicht einen Dekorator über eine Klasse implementieren? Als
+passionierte Java-Entwickler wissen wir, dass Klassen alles
+übersichtlicher machen.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">PersonalizedVerboseCaller</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">decorate</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">decorate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Wrapper factory.&quot;&quot;&quot;</span>
+        <span class="k">print</span> <span class="s">&quot;Erzeuge einen Wrapper für die Funktion&quot;</span><span class="p">,</span> <span class="n">func</span><span class="o">.</span><span class="n">__name__</span>
+        <span class="k">def</span> <span class="nf">wrapper</span><span class="p">():</span>
+            <span class="k">print</span> <span class="s">&quot;Rufe die Funktion&quot;</span><span class="p">,</span> <span class="n">func</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="s">&quot;für&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s">&quot;auf&quot;</span>
+            <span class="n">func</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">wrapper</span>
+</pre></div>
+</div>
+<div class="highlight-pycon"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nd">@PersonalizedVerboseCaller</span><span class="p">(</span><span class="s">&quot;Csaba&quot;</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">spam</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&quot;Ich bin spam&quot;</span>
+<span class="gp">...</span>
+<span class="go">Erzeuge einen Wrapper für die Funktion spam</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">spam</span><span class="p">()</span>
+<span class="go">Rufe die Funktion spam für Csaba auf</span>
+<span class="go">Ich bin spam</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>
