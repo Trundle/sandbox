@@ -1,13 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 from optparse import OptionParser
-try:
-    from urlparse import urljoin
-    from xmlrpclib import ServerProxy, Error as XMLRPCError
-except ImportError:
-    # Python 3
-    from urllib.parse import urljoin
-    from xmlrpc.client import ServerProxy, Error as XMLRPCError
+
+# Python 3
+from urllib.parse import urljoin
+from xmlrpc.client import ServerProxy, Error as XMLRPCError
 
 
 URL = 'http://bpaste.net/'
