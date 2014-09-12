@@ -23,7 +23,7 @@ def pastebin(source, syntax, expiry=DEFAULT_DURATION):
         'expiry': expiry
     }
 
-    req = requests.post(url, data=payload)
+    req = requests.post(url, data=payload, verify=True)
     reponse = req.json()
 
     return (urljoin(URL, '/show/{0}'.format(reponse['paste_id'])),
