@@ -6,6 +6,18 @@ import requests.exceptions
 from argparse import ArgumentParser
 from urllib.parse import urljoin
 
+# get list of available lexers from pygments
+try:
+    from pygments.lexers import get_all_lexers
+    import itertools
+
+    lexers = itertools.chain.from_iterable(lexer[1] for lexer in
+                                           get_all_lexers())
+
+    LEXERS = ', '.join(sorted(lexers))
+except ImportError:
+    LEXERS = 'py, bash, sql, xml, c, c++, etc'
+
 # service URL
 URL = 'https://bpaste.net'
 
@@ -73,7 +85,7 @@ def main(args=None):
     parser.add_argument('action', default='paste', nargs='?', choices=ACTIONS,
                         help='Action to perform')
     parser.add_argument('-s', '--syntax', dest='syntax', default='pycon',
-                        help='Syntax highlighting: py, bash, sql, xml, c, c++, etc')
+                        help='Syntax highlighting: {0}'.format(LEXERS))
     parser.add_argument('-e', '--expiry', dest='expiry', choices=DURATIONS,
                         default=DEFAULT_DURATION,
                         help='Expiry time of the paste')
