@@ -25,7 +25,7 @@ def paste(source, syntax, expiry=DEFAULT_DURATION):
     url = urljoin(URL, '/json/new')
     payload = {
         'code': source,
-        'lexer': syntax,
+        'lexer': syntax is not None or 'text',
         'expiry': expiry
     }
 
