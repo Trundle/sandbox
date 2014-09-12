@@ -1,51 +1,59 @@
 #!/usr/bin/env python3
+
 import sys
-from optparse import OptionParser
-
-# Python 3
+import requests
+import requests.exceptions
+from argparse import ArgumentParser
 from urllib.parse import urljoin
-from xmlrpc.client import ServerProxy, Error as XMLRPCError
 
+URL = 'https://bpaste.net'
+DURATIONS = ('1day', '1week', '1month', 'never')
+DEFAULT_DURATION = DURATIONS[0]
 
-URL = 'http://bpaste.net/'
-
-
-def pastebin(source, syntax, parent='', filename='', mimetype='', private=False):
+def pastebin(source, syntax, expiry=DEFAULT_DURATION):
     """Upload to a pastebin and output the URL"""
-    pasteservice = ServerProxy(urljoin(URL, 'xmlrpc/'))
-    paste_id = pasteservice.pastes.newPaste(syntax, source, parent,
-                                            filename, mimetype, private)
-    return urljoin(URL, '/show/%s/' % (paste_id, ))
 
+    if expiry not in DURATIONS:
+        raise ValueError("{0} is not a valid expiry duration".format(expiry))
+
+    url = urljoin(URL, '/json')
+    payload = {
+        'code': source,
+        'lexer': syntax,
+        'expiry': expiry
+    }
+
+    req = requests.post(url, data=payload)
+    reponse = req.json()
+
+    return (urljoin(URL, '/show/{0}'.format(reponse['paste_id'])),
+            urljoin(URL, '/remove/{0}'.format(response['removal_id'])))
 
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
 
-    parser = OptionParser()
-    parser.add_option('-p', dest='parent', type='string', default='')
-    parser.add_option("-s", dest="syntax", type='string', default='pycon',
-                  help="Syntax highlighting: py, bash, sql, xml, c, c++, etc")
-    parser.add_option('-P', dest='private', action='store_false', default=True,
-                      help="Create a public paste")
-    options, args = parser.parse_args(args)
-    if args:
+    parser = ArgumentParser(description='Post pastes to {0}.'.format(URL))
+    parser.add_argument('-s', dest='syntax', default='pycon',
+                        help='Syntax highlighting: py, bash, sql, xml, c, c++, etc')
+    parser.add_argument('-e', dest='expiry', choices=DURATIONS,
+                        default=DEFAULT_DURATION,
+                        help='Expiry time of the paste')
+    args = parser.parse_args(args)
+    if not args:
         parser.print_usage()
         return 1
 
     source = sys.stdin.read()
     try:
-        url = pastebin(source, options.syntax, options.parent,
-                       private=options.private)
-    except XMLRPCError:
-        exc = sys.exc_info()[1]
-        sys.stderr.write('Paste failed: %s\n' % (str(exc), ))
+        url, delete_url = pastebin(source, args.syntax, args.expiry)
+    except requests.exceptions.RequestException as exc:
+        print('Paste failed: {0}'.format(exc), file=sys.stderr)
     else:
-        sys.stdout.write('Paste succeeded, available as %s\n' % (url, ))
+        print("Paste succedded, available as {0}.".format(url))
+        print("It can be removed by opening {0}.".format(delete_url))
 
     return 0
-
-
 
 if __name__ == '__main__':
     sys.exit(main())
