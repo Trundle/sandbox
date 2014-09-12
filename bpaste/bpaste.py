@@ -23,11 +23,13 @@ def pastebin(source, syntax, expiry=DEFAULT_DURATION):
         'expiry': expiry
     }
 
-    req = requests.post(url, data=payload, verify=True)
-    reponse = req.json()
+    response = requests.post(url, data=payload, verify=True)
+    response.raise_for_status()
 
-    return (urljoin(URL, '/show/{0}'.format(reponse['paste_id'])),
-            urljoin(URL, '/remove/{0}'.format(response['removal_id'])))
+    data = response.json()
+
+    return (urljoin(URL, '/show/{0}'.format(data['paste_id'])),
+            urljoin(URL, '/remove/{0}'.format(data['removal_id'])))
 
 def main(args=None):
     if args is None:
