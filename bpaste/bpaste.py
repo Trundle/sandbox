@@ -37,7 +37,7 @@ def paste(source, syntax, expiry=DEFAULT_DURATION):
     url = urljoin(URL, '/json/new')
     payload = {
         'code': source,
-        'lexer': syntax is not None or 'text',
+        'lexer': syntax if syntax is not None else 'text',
         'expiry': expiry
     }
 
@@ -57,9 +57,9 @@ def remove_paste(removal_id):
         'removal_id': removal_id
     }
 
-    response = requests.post(url, data=playload, verify=True)
+    response = requests.post(url, data=payload, verify=True)
     if response.status_code not in (requests.codes.ok,
-                                    requests.codes.not_founds):
+                                    requests.codes.not_found):
         response.raise_for_status()
 
     return response.status_code == requests.codes.ok
