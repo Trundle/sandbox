@@ -28,16 +28,18 @@ DEFAULT_DURATION = DURATIONS[0]
 # actions
 ACTIONS = ('paste', 'remove', 'show')
 
-def paste(source, syntax, expiry=DEFAULT_DURATION):
+def paste(source, lexer, expiry=DEFAULT_DURATION):
     """Upload to a pastebin and output the URL"""
 
     if expiry not in DURATIONS:
         raise ValueError("{0} is not a valid expiry duration".format(expiry))
+    if lexer is not None and lexer not in LEXERS:
+        raise ValueError("{0} is not a valid lexer".format(lexer))
 
     url = urljoin(URL, '/json/new')
     payload = {
         'code': source,
-        'lexer': syntax if syntax is not None else 'text',
+        'lexer': lexer if lexer is not None else 'text',
         'expiry': expiry
     }
 
